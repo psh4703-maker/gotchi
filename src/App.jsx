@@ -367,6 +367,12 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
       const { data, error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
+        options: {
+          data: {
+            display_name: form.displayName,
+            role: form.role || "Founder",
+          },
+        },
       });
 
       if (error) {
@@ -375,18 +381,8 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
         return;
       }
 
-      if (data.user) {
-        const { error: profileError } = await supabase.from("profiles").insert({
-          id: data.user.id,
-          display_name: form.displayName,
-          role: form.role || "Founder",
-        });
-
-        if (profileError) {
-          onError(profileError.message);
-          setIsLoading(false);
-          return;
-        }
+      if (data.user && !data.session) {
+        onError("가입 확인 메일을 보냈습니다. 메일 인증 후 로그인해주세요.");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
