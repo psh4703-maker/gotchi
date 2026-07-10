@@ -15,6 +15,30 @@ pnpm dev
 http://127.0.0.1:5173
 ```
 
+## 실제 로그인과 데이터 저장 설정
+
+이 프로젝트는 Supabase Auth와 Supabase Database를 사용합니다.
+
+1. [Supabase](https://supabase.com)에서 새 프로젝트를 만듭니다.
+2. Supabase 대시보드의 SQL Editor에서 `supabase-schema.sql` 내용을 실행합니다.
+3. Project Settings > API에서 아래 두 값을 복사합니다.
+   - Project URL
+   - anon public key
+4. 프로젝트 루트에 `.env.local` 파일을 만들고 아래처럼 넣습니다.
+
+```txt
+VITE_SUPABASE_URL=Project URL
+VITE_SUPABASE_ANON_KEY=anon public key
+```
+
+5. 로컬에서는 다시 실행합니다.
+
+```bash
+pnpm dev
+```
+
+6. Vercel 배포 후에는 Vercel 프로젝트의 Settings > Environment Variables에도 같은 값을 추가합니다.
+
 ## 정식 사이트로 배포하기
 
 가장 쉬운 방법은 GitHub에 이 프로젝트를 올린 뒤 Vercel에 연결하는 것입니다.
