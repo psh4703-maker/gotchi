@@ -8,6 +8,7 @@ import ApplyModal from "./components/ApplyModal";
 import DetailModal from "./components/DetailModal";
 import WorkspaceModal from "./components/WorkspaceModal";
 import ReviewModal from "./components/ReviewModal";
+import MultiSelectChips from "./components/MultiSelectChips";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
@@ -18,20 +19,48 @@ const tabs = [
   { id: "portfolio", label: "My Portfolio" },
 ];
 
+const ROLE_OPTIONS = ["경영", "기획/전략", "재무/회계", "디자인", "개발", "마케팅", "세일즈", "운영"];
+const SKILL_OPTIONS = [
+  "기획력",
+  "디자인 툴 숙련자",
+  "코딩 숙련자",
+  "재무 관련 경험자",
+  "카피라이팅 경험자",
+  "데이터 분석 경험자",
+  "SNS/콘텐츠 운영 경험자",
+  "영업 경험자",
+];
+const REWARD_OPTIONS = [
+  "현금 보상",
+  "지분 제공",
+  "인터뷰 우선권",
+  "협업 평판 피드백",
+  "정규직 전환 기회",
+  "활동비 지원",
+];
+const VALUE_OPTIONS = ["빠른 실험", "고객 집착", "투명한 커뮤니케이션", "데이터 기반 의사결정", "실행력", "수평적 문화"];
+const WORK_TYPE_OPTIONS = ["Remote-first", "주 1회 오프라인", "주 2-3회 오프라인", "상근(출근)"];
+const JOIN_PROCESS_OPTIONS = ["바로 정식 합류", "1개월 협업 후 논의", "3개월 협업 후 논의", "팝업 미션 완료 후 논의"];
+const MEMBER_TYPE_OPTIONS = ["Full-time", "Part-time", "Advisor"];
+
 const emptyQuestForm = {
   title: "",
   mission: "",
   period: "7일",
-  reward: "",
-  skills: "",
+  rewardTags: [],
+  rewardDetail: "",
+  skills: [],
 };
 
 const emptyAllianceForm = {
   teamName: "",
   vision: "",
-  roles: "",
+  roles: [],
   equity: "",
-  values: "",
+  values: [],
+  joinProcess: JOIN_PROCESS_OPTIONS[1],
+  workType: WORK_TYPE_OPTIONS[0],
+  teamMembers: [],
 };
 
 function App() {
@@ -151,13 +180,17 @@ function App() {
       return;
     }
 
+    const reward = [...questForm.rewardTags, questForm.rewardDetail.trim()]
+      .filter(Boolean)
+      .join(" + ");
+
     const { error } = await supabase.from("quests").insert({
       owner_id: currentUser.id,
       title: questForm.title,
       mission: questForm.mission,
       period: questForm.period,
-      reward: questForm.reward,
-      skills: splitTags(questForm.skills),
+      reward,
+      skills: questForm.skills,
     });
 
     if (error) {
@@ -182,9 +215,12 @@ function App() {
       owner_id: currentUser.id,
       team_name: allianceForm.teamName,
       vision: allianceForm.vision,
-      roles: splitTags(allianceForm.roles),
+      roles: allianceForm.roles,
       equity: allianceForm.equity,
-      values: splitTags(allianceForm.values),
+      values: allianceForm.values,
+      join_process: allianceForm.joinProcess,
+      work_type: allianceForm.workType,
+      team_members: allianceForm.teamMembers,
     });
 
     if (error) {
@@ -195,6 +231,26 @@ function App() {
     setAllianceForm(emptyAllianceForm);
     await loadPublicData();
     setActiveTab("alliance");
+  };
+
+  const deleteQuest = async (quest) => {
+    if (!window.confirm("이 미션을 삭제할까요? 되돌릴 수 없어요.")) return;
+    const { error } = await supabase.from("quests").delete().eq("id", quest.id);
+    if (error) {
+      setStatusMessage(error.message);
+      return;
+    }
+    await loadPublicData();
+  };
+
+  const deleteAlliance = async (alliance) => {
+    if (!window.confirm("이 팀 모집글을 삭제할까요? 되돌릴 수 없어요.")) return;
+    const { error } = await supabase.from("alliances").delete().eq("id", alliance.id);
+    if (error) {
+      setStatusMessage(error.message);
+      return;
+    }
+    await loadPublicData();
   };
 
   // ---- Matching workflow: 지원 -> 수락 -> 워크스페이스 -> 완료 -> 리뷰 ----
@@ -500,6 +556,8 @@ function App() {
             reviews={reviews}
             onLogin={() => setIsAuthOpen(true)}
             onOpenApplication={openWorkspace}
+            onDeleteQuest={deleteQuest}
+            onDeleteAlliance={deleteAlliance}
           />
         );
       case "create-quest":
@@ -631,8 +689,14 @@ function App() {
           item={detailTarget.item}
           currentUser={currentUser}
           myApplication={findMyApplication(detailTarget.item, detailTarget.type)}
+          relatedQuest={
+            detailTarget.type === "alliance"
+              ? quests.find((q) => q.owner_id === detailTarget.item.owner_id)
+              : null
+          }
           onApply={openApply}
           onOpenWorkspace={openWorkspace}
+          onSelectQuest={(quest) => openDetail(quest, "quest")}
           onClose={closeDetail}
         />
       )}
@@ -821,11 +885,29 @@ function CreateQuestSection({ form, setForm, onSubmit, onCancel }) {
       <form onSubmit={onSubmit} className="space-y-5">
         <TextInput label="미션 제목" value={form.title} onChange={(value) => setForm((prev) => ({ ...prev, title: value }))} />
         <TextareaInput label="해결이 필요한 구체적 미션" value={form.mission} onChange={(value) => setForm((prev) => ({ ...prev, mission: value }))} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextInput label="기간" value={form.period} onChange={(value) => setForm((prev) => ({ ...prev, period: value }))} />
-          <TextInput label="보상/리워드" value={form.reward} onChange={(value) => setForm((prev) => ({ ...prev, reward: value }))} />
-        </div>
-        <TextInput label="필요 스킬" value={form.skills} onChange={(value) => setForm((prev) => ({ ...prev, skills: value }))} placeholder="쉼표로 구분: Figma, React" />
+        <TextInput label="기간" value={form.period} onChange={(value) => setForm((prev) => ({ ...prev, period: value }))} />
+
+        <MultiSelectChips
+          label="필요 역량"
+          options={SKILL_OPTIONS}
+          selected={form.skills}
+          onChange={(skills) => setForm((prev) => ({ ...prev, skills }))}
+        />
+
+        <MultiSelectChips
+          label="보상 유형"
+          options={REWARD_OPTIONS}
+          selected={form.rewardTags}
+          onChange={(rewardTags) => setForm((prev) => ({ ...prev, rewardTags }))}
+          allowCustom={false}
+        />
+        <TextInput
+          label="보상 상세 (선택)"
+          value={form.rewardDetail}
+          onChange={(value) => setForm((prev) => ({ ...prev, rewardDetail: value }))}
+          placeholder="예: 800,000원"
+        />
+
         <EditorActions submitLabel="미션 등록하기" onCancel={onCancel} />
       </form>
     </EditorShell>
@@ -833,14 +915,125 @@ function CreateQuestSection({ form, setForm, onSubmit, onCancel }) {
 }
 
 function CreateAllianceSection({ form, setForm, onSubmit, onCancel }) {
+  const [memberDraft, setMemberDraft] = useState({ name: "", role: "", type: MEMBER_TYPE_OPTIONS[0] });
+
+  const addMember = () => {
+    if (!memberDraft.name.trim() || !memberDraft.role.trim()) return;
+    setForm((prev) => ({ ...prev, teamMembers: [...prev.teamMembers, memberDraft] }));
+    setMemberDraft({ name: "", role: "", type: MEMBER_TYPE_OPTIONS[0] });
+  };
+
+  const removeMember = (index) => {
+    setForm((prev) => ({ ...prev, teamMembers: prev.teamMembers.filter((_, i) => i !== index) }));
+  };
+
   return (
     <EditorShell title="정식 팀 모집글 올리기" eyebrow="Create Build-up Team">
       <form onSubmit={onSubmit} className="space-y-5">
         <TextInput label="팀 이름" value={form.teamName} onChange={(value) => setForm((prev) => ({ ...prev, teamName: value }))} />
         <TextareaInput label="팀 비전" value={form.vision} onChange={(value) => setForm((prev) => ({ ...prev, vision: value }))} />
-        <TextInput label="모집 직군" value={form.roles} onChange={(value) => setForm((prev) => ({ ...prev, roles: value }))} placeholder="쉼표로 구분: Frontend Engineer, Designer" />
+
+        <MultiSelectChips
+          label="모집 직군"
+          options={ROLE_OPTIONS}
+          selected={form.roles}
+          onChange={(roles) => setForm((prev) => ({ ...prev, roles }))}
+        />
+
         <TextInput label="제공 지분 범위" value={form.equity} onChange={(value) => setForm((prev) => ({ ...prev, equity: value }))} placeholder="예: 2% - 6%" />
-        <TextInput label="팀 가치관" value={form.values} onChange={(value) => setForm((prev) => ({ ...prev, values: value }))} placeholder="쉼표로 구분: 빠른 실험, 투명한 소통" />
+
+        <MultiSelectChips
+          label="팀 가치관"
+          options={VALUE_OPTIONS}
+          selected={form.values}
+          onChange={(values) => setForm((prev) => ({ ...prev, values }))}
+        />
+
+        <div>
+          <p className="text-sm font-black text-slate-800">근무 형태</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {WORK_TYPE_OPTIONS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, workType: option }))}
+                className={`rounded-full px-3 py-2 text-xs font-bold transition ${
+                  form.workType === option ? "bg-slate-950 text-white" : "glass-pill text-slate-600 hover:bg-white/70"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-sm font-black text-slate-800">합류 방식</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {JOIN_PROCESS_OPTIONS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, joinProcess: option }))}
+                className={`rounded-full px-3 py-2 text-xs font-bold transition ${
+                  form.joinProcess === option ? "bg-slate-950 text-white" : "glass-pill text-slate-600 hover:bg-white/70"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-sm font-black text-slate-800">현재 팀원 (선택)</p>
+          {form.teamMembers.length > 0 && (
+            <div className="mt-2 space-y-2">
+              {form.teamMembers.map((member, index) => (
+                <div key={`${member.name}-${index}`} className="glass-pill flex items-center justify-between rounded-2xl px-4 py-2">
+                  <span className="text-sm font-bold text-slate-700">
+                    {member.name} · {member.role}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-slate-950 px-2 py-1 text-xs font-black text-white">{member.type}</span>
+                    <button type="button" onClick={() => removeMember(index)} className="text-xs font-black text-slate-400 hover:text-slate-900">
+                      x
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <input
+              value={memberDraft.name}
+              onChange={(event) => setMemberDraft((prev) => ({ ...prev, name: event.target.value }))}
+              placeholder="이름"
+              className="glass-pill w-28 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            />
+            <input
+              value={memberDraft.role}
+              onChange={(event) => setMemberDraft((prev) => ({ ...prev, role: event.target.value }))}
+              placeholder="역할 (예: Founder / Product)"
+              className="glass-pill flex-1 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            />
+            <select
+              value={memberDraft.type}
+              onChange={(event) => setMemberDraft((prev) => ({ ...prev, type: event.target.value }))}
+              className="glass-pill rounded-2xl px-3 py-2 text-sm outline-none"
+            >
+              {MEMBER_TYPE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <button type="button" onClick={addMember} className="glass-pill rounded-2xl px-4 py-2 text-sm font-black text-slate-600 hover:bg-white/70">
+              팀원 추가
+            </button>
+          </div>
+        </div>
+
         <EditorActions submitLabel="팀 모집 등록하기" onCancel={onCancel} />
       </form>
     </EditorShell>
@@ -910,13 +1103,6 @@ function EditorActions({ submitLabel, onCancel }) {
       </button>
     </div>
   );
-}
-
-function splitTags(value) {
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
 
 export default App;

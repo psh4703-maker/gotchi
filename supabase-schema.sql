@@ -27,8 +27,15 @@ create table if not exists public.alliances (
   roles text[] not null default '{}',
   equity text not null,
   values text[] not null default '{}',
+  join_process text not null default '',
+  work_type text not null default '',
+  team_members jsonb not null default '[]',
   created_at timestamptz not null default now()
 );
+
+alter table public.alliances add column if not exists join_process text not null default '';
+alter table public.alliances add column if not exists work_type text not null default '';
+alter table public.alliances add column if not exists team_members jsonb not null default '[]';
 
 alter table public.profiles enable row level security;
 alter table public.quests enable row level security;
@@ -58,6 +65,10 @@ create policy "Owners can update their quests"
 on public.quests for update
 using (auth.uid() = owner_id);
 
+create policy "Owners can delete their quests"
+on public.quests for delete
+using (auth.uid() = owner_id);
+
 create policy "Alliances are readable by everyone"
 on public.alliances for select
 using (true);
@@ -68,6 +79,10 @@ with check (auth.uid() = owner_id);
 
 create policy "Owners can update their alliances"
 on public.alliances for update
+using (auth.uid() = owner_id);
+
+create policy "Owners can delete their alliances"
+on public.alliances for delete
 using (auth.uid() = owner_id);
 
 create or replace function public.handle_new_user()

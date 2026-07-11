@@ -1,4 +1,4 @@
-function DetailModal({ type, item, currentUser, myApplication, onApply, onOpenWorkspace, onClose }) {
+function DetailModal({ type, item, currentUser, myApplication, relatedQuest, onApply, onOpenWorkspace, onSelectQuest, onClose }) {
   const isQuest = type === "quest";
   const accent = isQuest
     ? { text: "text-[#ff3b30]", chip: "bg-[#ff3b30]/10", grad: "from-[#ff5b4d] to-[#ff3b30]", ring: "shadow-[0_10px_20px_-8px_rgba(255,59,48,0.55)]" }
@@ -53,6 +53,32 @@ function DetailModal({ type, item, currentUser, myApplication, onApply, onOpenWo
           ))}
         </div>
 
+        {!isQuest && item.team_members?.length > 0 && (
+          <div className="mt-6">
+            <p className="text-sm font-black text-slate-800">현재 팀원 현황</p>
+            <div className="mt-3 space-y-2">
+              {item.team_members.map((member, index) => (
+                <div key={`${member.name}-${index}`} className="glass-pill flex items-center justify-between rounded-2xl px-4 py-3">
+                  <div>
+                    <p className="text-sm font-black text-slate-900">{member.name}</p>
+                    <p className="text-xs text-slate-500">{member.role}</p>
+                  </div>
+                  <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white">
+                    {member.type}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isQuest && (item.join_process || item.work_type) && (
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {item.join_process && <InfoRow label="합류 방식" value={item.join_process} />}
+            {item.work_type && <InfoRow label="근무 형태" value={item.work_type} />}
+          </div>
+        )}
+
         <div className="mt-8 border-t border-white/60 pt-6">
           {isOwner ? (
             <p className="rounded-2xl bg-white/50 p-4 text-sm font-bold text-slate-500">
@@ -76,6 +102,20 @@ function DetailModal({ type, item, currentUser, myApplication, onApply, onOpenWo
             </button>
           )}
         </div>
+
+        {!isQuest && !isOwner && relatedQuest && (
+          <button
+            type="button"
+            onClick={() => onSelectQuest(relatedQuest)}
+            className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#3aa0ff] to-[#0a84ff] p-5 text-left text-white shadow-[0_14px_24px_-10px_rgba(10,132,255,0.5)] transition hover:brightness-105"
+          >
+            <p className="text-xs font-bold text-blue-100">아직 정식 합류가 고민된다면</p>
+            <p className="mt-1 text-base font-black">이 팀과 팝업 미션으로 먼저 일해보며 핏 확인하기</p>
+            <p className="mt-2 text-sm text-blue-100">
+              "{relatedQuest.title}" 미션으로 서로의 속도, 커뮤니케이션, 문제 해결 방식을 가볍게 확인해보세요.
+            </p>
+          </button>
+        )}
       </div>
     </div>
   );

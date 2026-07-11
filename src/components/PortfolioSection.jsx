@@ -1,4 +1,4 @@
-function PortfolioSection({ user, profile, quests, alliances, applications, reviews, onLogin, onOpenApplication }) {
+function PortfolioSection({ user, profile, quests, alliances, applications, reviews, onLogin, onOpenApplication, onDeleteQuest, onDeleteAlliance }) {
   if (!user) {
     return (
       <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
@@ -89,8 +89,8 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
         )}
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <ActivityPanel title="내 팝업 미션" items={quests} type="quest" />
-          <ActivityPanel title="내 팀 모집글" items={alliances} type="alliance" />
+          <ActivityPanel title="내 팝업 미션" items={quests} type="quest" onDelete={onDeleteQuest} />
+          <ActivityPanel title="내 팀 모집글" items={alliances} type="alliance" onDelete={onDeleteAlliance} />
         </div>
 
         <section className="glass rounded-3xl p-6">
@@ -167,7 +167,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function ActivityPanel({ title, items, type }) {
+function ActivityPanel({ title, items, type, onDelete }) {
   return (
     <section className="glass rounded-3xl p-6">
       <h2 className="text-2xl font-black text-slate-950">{title}</h2>
@@ -182,9 +182,18 @@ function ActivityPanel({ title, items, type }) {
               key={item.id}
               className="glass-pill rounded-2xl p-4"
             >
-              <p className="text-xs font-black text-[#0a84ff]">
-                {type === "quest" ? "#팝업미션" : "#팀모집"}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xs font-black text-[#0a84ff]">
+                  {type === "quest" ? "#팝업미션" : "#팀모집"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onDelete?.(item)}
+                  className="text-xs font-black text-slate-400 hover:text-[#ff3b30]"
+                >
+                  삭제
+                </button>
+              </div>
               <h3 className="mt-2 text-lg font-black text-slate-950">
                 {type === "quest" ? item.title : item.team_name}
               </h3>
