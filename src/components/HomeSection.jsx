@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance }) {
+function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSelectQuest, onSelectAlliance }) {
   const [filter, setFilter] = useState("all");
 
   const feedItems = useMemo(() => {
@@ -19,11 +19,11 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance }) {
     filter === "all" ? feedItems : feedItems.filter((item) => item.type === filter);
 
   return (
-    <section className="min-h-screen px-5 py-8 sm:px-6 lg:px-8">
+    <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col justify-between gap-5 border-b border-slate-200 pb-8 lg:flex-row lg:items-end">
+        <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
-            <p className="mb-3 text-sm font-bold text-blue-600">
+            <p className="mb-3 text-sm font-bold text-[#0a84ff]">
               Real founder matching
             </p>
             <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
@@ -38,21 +38,21 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance }) {
             <button
               type="button"
               onClick={onCreateQuest}
-              className="rounded-2xl bg-red-500 px-5 py-3 text-sm font-black text-white hover:bg-red-600"
+              className="rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-5 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(255,59,48,0.55)] transition hover:brightness-105 active:scale-[0.98]"
             >
               팝업 미션 올리기
             </button>
             <button
               type="button"
               onClick={onCreateAlliance}
-              className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white hover:bg-blue-700"
+              className="rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.55)] transition hover:brightness-105 active:scale-[0.98]"
             >
               팀 모집 올리기
             </button>
           </div>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="glass mb-6 flex flex-wrap gap-2 rounded-2xl p-2">
           {[
             ["all", "전체 보기"],
             ["quest", "팝업 미션만 보기"],
@@ -62,10 +62,10 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance }) {
               key={id}
               type="button"
               onClick={() => setFilter(id)}
-              className={`rounded-xl px-4 py-2 text-sm font-bold ${
+              className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
                 filter === id
-                  ? "bg-slate-950 text-white"
-                  : "text-slate-500 hover:bg-slate-100"
+                  ? "bg-slate-950 text-white shadow-[0_10px_18px_-8px_rgba(15,23,42,0.5)]"
+                  : "text-slate-500 hover:bg-white/60"
               }`}
             >
               {label}
@@ -82,9 +82,9 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance }) {
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {filteredItems.map((item) =>
               item.type === "quest" ? (
-                <QuestCard key={item.id} quest={item} />
+                <QuestCard key={item.id} quest={item} onClick={() => onSelectQuest?.(item)} />
               ) : (
-                <AllianceCard key={item.id} alliance={item} />
+                <AllianceCard key={item.id} alliance={item} onClick={() => onSelectAlliance?.(item)} />
               ),
             )}
           </div>
@@ -94,14 +94,20 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance }) {
   );
 }
 
-function QuestCard({ quest }) {
+function QuestCard({ quest, onClick }) {
   return (
-    <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-red-200 hover:shadow-xl hover:shadow-red-100/70">
-      <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-600">
+    <article
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => event.key === "Enter" && onClick?.()}
+      className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#ff3b30]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(255,59,48,0.35)]"
+    >
+      <span className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-black text-[#ff3b30]">
         #팝업미션
       </span>
       <h2 className="mt-5 text-xl font-black text-slate-950">{quest.title}</h2>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{quest.mission}</p>
+      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{quest.mission}</p>
       <div className="mt-5 space-y-2 text-sm text-slate-600">
         <p>
           <strong className="text-slate-950">기간:</strong> {quest.period}
@@ -115,16 +121,22 @@ function QuestCard({ quest }) {
   );
 }
 
-function AllianceCard({ alliance }) {
+function AllianceCard({ alliance, onClick }) {
   return (
-    <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-100/70">
-      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-600">
+    <article
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => event.key === "Enter" && onClick?.()}
+      className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#0a84ff]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(10,132,255,0.35)]"
+    >
+      <span className="rounded-full bg-[#0a84ff]/10 px-3 py-1 text-xs font-black text-[#0a84ff]">
         #정식합류
       </span>
       <h2 className="mt-5 text-xl font-black text-slate-950">
         {alliance.team_name}
       </h2>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{alliance.vision}</p>
+      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{alliance.vision}</p>
       <div className="mt-5 space-y-2 text-sm text-slate-600">
         <p>
           <strong className="text-slate-950">구인 직군:</strong>{" "}
@@ -149,7 +161,7 @@ function TagList({ tags }) {
       {tags.map((tag) => (
         <span
           key={tag}
-          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-500"
+          className="glass-pill rounded-full px-3 py-1 text-xs font-semibold text-slate-600"
         >
           {tag}
         </span>
@@ -160,7 +172,7 @@ function TagList({ tags }) {
 
 function EmptyState({ title, description }) {
   return (
-    <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
+    <div className="glass rounded-3xl border-dashed p-10 text-center">
       <h2 className="text-2xl font-black text-slate-950">{title}</h2>
       <p className="mt-3 text-sm leading-6 text-slate-500">{description}</p>
     </div>

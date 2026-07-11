@@ -1,10 +1,10 @@
-function QuestSection({ quests, onCreateQuest }) {
+function QuestSection({ quests, onCreateQuest, onSelectQuest }) {
   return (
-    <section className="min-h-screen px-5 py-8 sm:px-6 lg:px-8">
+    <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="flex flex-col justify-between gap-5 border-b border-slate-200 pb-8 lg:flex-row lg:items-end">
+        <div className="flex flex-col justify-between gap-5 pb-8 lg:flex-row lg:items-end">
           <div>
-            <p className="mb-3 text-sm font-black text-red-500">Popup Mission</p>
+            <p className="mb-3 text-sm font-black text-[#ff3b30]">Popup Mission</p>
             <h1 className="text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
               실제 등록된 단기 미션
             </h1>
@@ -16,14 +16,14 @@ function QuestSection({ quests, onCreateQuest }) {
           <button
             type="button"
             onClick={onCreateQuest}
-            className="rounded-2xl bg-red-500 px-5 py-3 text-sm font-black text-white hover:bg-red-600"
+            className="rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-5 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(255,59,48,0.55)] transition hover:brightness-105 active:scale-[0.98]"
           >
             새 미션 올리기
           </button>
         </div>
 
         {quests.length === 0 ? (
-          <div className="mt-8 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
+          <div className="glass mt-8 rounded-3xl border-dashed p-10 text-center">
             <h2 className="text-2xl font-black text-slate-950">
               아직 등록된 미션이 없습니다
             </h2>
@@ -36,15 +36,19 @@ function QuestSection({ quests, onCreateQuest }) {
             {quests.map((quest) => (
               <article
                 key={quest.id}
-                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-red-200 hover:shadow-xl hover:shadow-red-100/70"
+                onClick={() => onSelectQuest?.(quest)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => event.key === "Enter" && onSelectQuest?.(quest)}
+                className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#ff3b30]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(255,59,48,0.35)]"
               >
-                <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-600">
+                <span className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-black text-[#ff3b30]">
                   #팝업미션
                 </span>
                 <h2 className="mt-5 text-xl font-black text-slate-950">
                   {quest.title}
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+                <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
                   {quest.mission}
                 </p>
                 <div className="mt-5 space-y-2 text-sm text-slate-600">
@@ -61,7 +65,7 @@ function QuestSection({ quests, onCreateQuest }) {
                   {quest.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-500"
+                      className="glass-pill rounded-full px-3 py-1 text-xs font-semibold text-slate-600"
                     >
                       {skill}
                     </span>

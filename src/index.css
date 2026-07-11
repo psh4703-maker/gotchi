@@ -11,14 +11,98 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: #f8fafc;
+  color: #0b0f19;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, ui-sans-serif,
+    system-ui, "Segoe UI", sans-serif;
+  background: #f2f3f7;
+  position: relative;
+}
+
+/* Liquid glass ambient background: soft, slow-drifting color mesh
+   that every glass surface refracts. Fixed so it never scrolls away. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: -1;
+  background:
+    radial-gradient(38rem 30rem at 12% 8%, rgba(255, 69, 58, 0.16), transparent 60%),
+    radial-gradient(42rem 34rem at 88% 12%, rgba(10, 132, 255, 0.18), transparent 60%),
+    radial-gradient(46rem 38rem at 20% 92%, rgba(94, 92, 230, 0.14), transparent 60%),
+    radial-gradient(40rem 32rem at 90% 88%, rgba(255, 159, 10, 0.1), transparent 60%),
+    #f2f3f7;
+  filter: blur(60px) saturate(140%);
+  animation: mesh-drift 26s ease-in-out infinite alternate;
+}
+
+@keyframes mesh-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(-2%, 2%, 0) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+  }
 }
 
 button,
 input,
 textarea {
   font: inherit;
+}
+
+/* ---- Liquid glass primitives ---------------------------------- */
+
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 18px 40px -20px rgba(15, 23, 42, 0.25);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 24px 48px -24px rgba(15, 23, 42, 0.3);
+}
+
+.glass-dark {
+  background: rgba(11, 15, 25, 0.72);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 20px 44px -18px rgba(0, 0, 0, 0.55);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+
+.glass-card {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
 }
