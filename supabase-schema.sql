@@ -41,46 +41,57 @@ alter table public.profiles enable row level security;
 alter table public.quests enable row level security;
 alter table public.alliances enable row level security;
 
+drop policy if exists "Profiles are readable by everyone" on public.profiles;
 create policy "Profiles are readable by everyone"
 on public.profiles for select
 using (true);
 
+drop policy if exists "Users can insert their own profile" on public.profiles;
 create policy "Users can insert their own profile"
 on public.profiles for insert
 with check (auth.uid() = id);
 
+drop policy if exists "Users can update their own profile" on public.profiles;
 create policy "Users can update their own profile"
 on public.profiles for update
 using (auth.uid() = id);
 
+drop policy if exists "Quests are readable by everyone" on public.quests;
 create policy "Quests are readable by everyone"
 on public.quests for select
 using (true);
 
+drop policy if exists "Logged-in users can create quests" on public.quests;
 create policy "Logged-in users can create quests"
 on public.quests for insert
 with check (auth.uid() = owner_id);
 
+drop policy if exists "Owners can update their quests" on public.quests;
 create policy "Owners can update their quests"
 on public.quests for update
 using (auth.uid() = owner_id);
 
+drop policy if exists "Owners can delete their quests" on public.quests;
 create policy "Owners can delete their quests"
 on public.quests for delete
 using (auth.uid() = owner_id);
 
+drop policy if exists "Alliances are readable by everyone" on public.alliances;
 create policy "Alliances are readable by everyone"
 on public.alliances for select
 using (true);
 
+drop policy if exists "Logged-in users can create alliances" on public.alliances;
 create policy "Logged-in users can create alliances"
 on public.alliances for insert
 with check (auth.uid() = owner_id);
 
+drop policy if exists "Owners can update their alliances" on public.alliances;
 create policy "Owners can update their alliances"
 on public.alliances for update
 using (auth.uid() = owner_id);
 
+drop policy if exists "Owners can delete their alliances" on public.alliances;
 create policy "Owners can delete their alliances"
 on public.alliances for delete
 using (auth.uid() = owner_id);
@@ -160,19 +171,23 @@ alter table public.application_messages enable row level security;
 alter table public.reviews enable row level security;
 
 -- applications: only the two participants can see or touch a match
+drop policy if exists "Participants can read their applications" on public.applications;
 create policy "Participants can read their applications"
 on public.applications for select
 using (auth.uid() = applicant_id or auth.uid() = owner_id);
 
+drop policy if exists "Logged-in users can apply" on public.applications;
 create policy "Logged-in users can apply"
 on public.applications for insert
 with check (auth.uid() = applicant_id and auth.uid() <> owner_id);
 
+drop policy if exists "Participants can update application status" on public.applications;
 create policy "Participants can update application status"
 on public.applications for update
 using (auth.uid() = applicant_id or auth.uid() = owner_id);
 
 -- messages: only participants of the parent application
+drop policy if exists "Participants can read messages" on public.application_messages;
 create policy "Participants can read messages"
 on public.application_messages for select
 using (
@@ -183,6 +198,7 @@ using (
   )
 );
 
+drop policy if exists "Participants can send messages" on public.application_messages;
 create policy "Participants can send messages"
 on public.application_messages for insert
 with check (
@@ -197,12 +213,14 @@ with check (
 -- reviews: public reviews are readable by everyone (portfolio display),
 -- private ones only by the two people involved. Only participants of a
 -- closed application can write a review, one per person.
+drop policy if exists "Public reviews are readable by everyone, private by participants" on public.reviews;
 create policy "Public reviews are readable by everyone, private by participants"
 on public.reviews for select
 using (
   is_public = true or auth.uid() = reviewer_id or auth.uid() = reviewee_id
 );
 
+drop policy if exists "Participants can leave one review after closing" on public.reviews;
 create policy "Participants can leave one review after closing"
 on public.reviews for insert
 with check (
