@@ -27,10 +27,10 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
               Real founder matching
             </p>
             <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-              실제 미션과 팀 모집글이 쌓이는 gotchi
+              같이 일하면, 가치가 남습니다.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-              로그인한 사용자가 올린 팝업 미션과 정식 팀 모집글만 표시됩니다.
+              먼저 일해보고 같이 할 지를 결정하세요. 그 경험을 gotchi에서 제공합니다.
             </p>
           </div>
 
