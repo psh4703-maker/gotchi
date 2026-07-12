@@ -49,7 +49,7 @@ function WorkspaceModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8 backdrop-blur-md">
-      <div className="glass-strong flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[32px]">
+      <div className="glass-strong flex h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[32px]">
         <div className="flex items-start justify-between gap-4 border-b border-white/60 px-6 py-5 sm:px-8">
           <div>
             <p className="text-xs font-black text-slate-400">
@@ -86,9 +86,9 @@ function WorkspaceModal({
           ))}
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5 sm:px-8">
+        <div className="flex flex-1 flex-col overflow-y-auto px-6 py-5 sm:px-8">
           {tab === "brief" && (
-            <>
+            <div className="space-y-5">
               {application.note && (
                 <div className="glass-pill rounded-2xl p-4">
                   <p className="text-xs font-black text-slate-400">지원 메시지</p>
@@ -132,7 +132,7 @@ function WorkspaceModal({
                   진행 상황은 채팅 탭에서, 제출·완료 처리는 제출·완료 탭에서 확인하세요.
                 </p>
               )}
-            </>
+            </div>
           )}
 
           {tab === "chat" && (
@@ -181,7 +181,7 @@ function WorkspaceModal({
           )}
 
           {tab === "wrap" && (
-            <>
+            <div className="space-y-5">
               {application.status === "accepted" && isApplicant && (
                 <div className="space-y-2">
                   <label className="block text-sm font-black text-slate-800">
@@ -310,7 +310,7 @@ function WorkspaceModal({
                   아직 진행 전이에요. 브리프 탭에서 수락 여부를 먼저 확인하세요.
                 </p>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
