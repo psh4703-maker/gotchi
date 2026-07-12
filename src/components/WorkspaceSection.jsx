@@ -12,6 +12,7 @@ const STATUS_LABEL = {
   disputed: ["분쟁중", "bg-[#ff3b30]/10 text-[#ff3b30]"],
   closed: ["종료", "bg-slate-200 text-slate-600"],
   rejected: ["거절됨", "bg-slate-200 text-slate-500"],
+  expired: ["자동 만료됨", "bg-slate-200 text-slate-500"],
 };
 
 function StatusPill({ status }) {

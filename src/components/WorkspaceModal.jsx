@@ -7,6 +7,7 @@ const STATUS_LABEL = {
   disputed: "분쟁중 · 운영자 확인 필요",
   closed: "종료됨",
   rejected: "거절됨",
+  expired: "자동 만료됨 (48시간 무응답)",
 };
 
 const TABS = [
@@ -127,7 +128,13 @@ function WorkspaceModal({
                 </p>
               )}
 
-              {!["pending", "rejected"].includes(application.status) && (
+              {application.status === "expired" && (
+                <p className="rounded-2xl bg-white/50 p-4 text-sm font-bold text-slate-500">
+                  48시간 동안 응답이 없어 자동으로 만료됐어요.
+                </p>
+              )}
+
+              {!["pending", "rejected", "expired"].includes(application.status) && (
                 <p className="rounded-2xl bg-white/50 p-4 text-sm text-slate-500">
                   진행 상황은 채팅 탭에서, 제출·완료 처리는 제출·완료 탭에서 확인하세요.
                 </p>
@@ -305,7 +312,7 @@ function WorkspaceModal({
                 </div>
               )}
 
-              {["pending", "rejected"].includes(application.status) && (
+              {["pending", "rejected", "expired"].includes(application.status) && (
                 <p className="rounded-2xl bg-white/50 p-4 text-sm text-slate-500">
                   아직 진행 전이에요. 브리프 탭에서 수락 여부를 먼저 확인하세요.
                 </p>

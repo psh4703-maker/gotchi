@@ -239,3 +239,48 @@ with check (
       and reviewee_id <> auth.uid()
   )
 );
+
+-- ============================================================
+-- 무응답 자동 처리: 48시간 응답 없는 지원은 자동 만료,
+-- 72시간 확인 없는 제출은 자동 종료. pg_cron으로 매시간 실행.
+-- ============================================================
+
+alter table public.applications drop constraint if exists applications_status_check;
+alter table public.applications add constraint applications_status_check
+  check (status in ('pending', 'accepted', 'rejected', 'submitted', 'closed', 'disputed', 'expired'));
+
+create extension if not exists pg_cron;
+
+create or replace function public.auto_resolve_stale_applications()
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- 48시간 넘게 수락/거절 응답이 없는 지원은 자동 만료
+  update public.applications
+  set status = 'expired', updated_at = now()
+  where status = 'pending'
+    and created_at < now() - interval '48 hours';
+
+  -- 72시간 넘게 완료 확인이 없는 제출은 자동 종료
+  update public.applications
+  set status = 'closed', updated_at = now()
+  where status = 'submitted'
+    and updated_at < now() - interval '72 hours';
+end;
+$$;
+
+do $$
+begin
+  perform cron.unschedule('auto-resolve-stale-applications');
+exception when others then
+  null;
+end;
+$$;
+
+select cron.schedule(
+  'auto-resolve-stale-applications',
+  '0 * * * *',
+  $$select public.auto_resolve_stale_applications();$$
+);
