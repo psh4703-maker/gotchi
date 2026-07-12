@@ -465,6 +465,32 @@ function App() {
     await refreshWorkspaceApp(application.id, currentUser.id);
   };
 
+  const updatePaymentNote = async (application, paymentNote) => {
+    const { error } = await supabase
+      .from("applications")
+      .update({ payment_note: paymentNote, updated_at: new Date().toISOString() })
+      .eq("id", application.id);
+
+    if (error) {
+      setStatusMessage(error.message);
+      return;
+    }
+    await refreshWorkspaceApp(application.id, currentUser.id);
+  };
+
+  const confirmPayment = async (application, confirmed) => {
+    const { error } = await supabase
+      .from("applications")
+      .update({ payment_confirmed: confirmed, updated_at: new Date().toISOString() })
+      .eq("id", application.id);
+
+    if (error) {
+      setStatusMessage(error.message);
+      return;
+    }
+    await refreshWorkspaceApp(application.id, currentUser.id);
+  };
+
   const submitReview = async (application, revieweeId, { tags, comment, isPublic }) => {
     const { error } = await supabase.from("reviews").insert({
       application_id: application.id,
@@ -726,6 +752,8 @@ function App() {
           onSubmitWork={(text) => submitWork(workspaceApp, text, "")}
           onConfirmClose={() => closeApplication(workspaceApp)}
           onRaiseDispute={() => raiseDispute(workspaceApp)}
+          onUpdatePaymentNote={(note) => updatePaymentNote(workspaceApp, note)}
+          onConfirmPayment={(confirmed) => confirmPayment(workspaceApp, confirmed)}
           onClose={closeWorkspace}
           onOpenReview={() => setReviewApp(workspaceApp)}
         />

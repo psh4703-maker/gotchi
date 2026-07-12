@@ -138,6 +138,8 @@ create table if not exists public.applications (
   submission_link text not null default '',
   applicant_reviewed boolean not null default false,
   owner_reviewed boolean not null default false,
+  payment_note text not null default '',
+  payment_confirmed boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint applications_target_check check (
@@ -145,6 +147,9 @@ create table if not exists public.applications (
     (type = 'alliance' and alliance_id is not null and quest_id is null)
   )
 );
+
+alter table public.applications add column if not exists payment_note text not null default '';
+alter table public.applications add column if not exists payment_confirmed boolean not null default false;
 
 create table if not exists public.application_messages (
   id uuid primary key default gen_random_uuid(),

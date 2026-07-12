@@ -9,6 +9,12 @@ const STATUS_LABEL = {
   rejected: "거절됨",
 };
 
+const TABS = [
+  { id: "brief", label: "브리프" },
+  { id: "chat", label: "채팅" },
+  { id: "wrap", label: "제출·완료" },
+];
+
 function WorkspaceModal({
   application,
   currentUser,
@@ -20,11 +26,17 @@ function WorkspaceModal({
   onSubmitWork,
   onConfirmClose,
   onRaiseDispute,
+  onUpdatePaymentNote,
+  onConfirmPayment,
   onClose,
   onOpenReview,
 }) {
+  const [tab, setTab] = useState(
+    ["accepted", "submitted", "disputed"].includes(application.status) ? "chat" : "brief",
+  );
   const [draft, setDraft] = useState("");
   const [submissionText, setSubmissionText] = useState(application.submission_note || "");
+  const [paymentNote, setPaymentNote] = useState(application.payment_note || "");
 
   const isOwner = currentUser.id === application.owner_id;
   const isApplicant = currentUser.id === application.applicant_id;
@@ -59,64 +71,102 @@ function WorkspaceModal({
           </button>
         </div>
 
+        <div className="glass-pill mx-6 mt-4 flex gap-1 rounded-full p-1 sm:mx-8">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`flex-1 rounded-full px-3 py-2 text-xs font-black transition ${
+                tab === t.id ? "bg-slate-950 text-white" : "text-slate-500 hover:bg-white/60"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5 sm:px-8">
-          {application.note && (
-            <div className="glass-pill rounded-2xl p-4">
-              <p className="text-xs font-black text-slate-400">지원 메시지</p>
-              <p className="mt-1 text-sm leading-6 text-slate-700">{application.note}</p>
-            </div>
+          {tab === "brief" && (
+            <>
+              {application.note && (
+                <div className="glass-pill rounded-2xl p-4">
+                  <p className="text-xs font-black text-slate-400">지원 메시지</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-700">{application.note}</p>
+                </div>
+              )}
+
+              {application.status === "pending" && isOwner && (
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={onAccept}
+                    className="flex-1 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(15,23,42,0.5)] transition hover:brightness-110"
+                  >
+                    수락하고 시작하기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onReject}
+                    className="glass-pill flex-1 rounded-2xl px-5 py-3 text-sm font-black text-slate-600 hover:bg-white/70"
+                  >
+                    거절하기
+                  </button>
+                </div>
+              )}
+
+              {application.status === "pending" && isApplicant && (
+                <p className="rounded-2xl bg-amber-50/80 p-4 text-sm font-bold text-amber-700">
+                  상대방의 수락을 기다리고 있어요. 48시간 안에 응답이 없으면 다른 미션을 찾아보는 걸 추천해요.
+                </p>
+              )}
+
+              {application.status === "rejected" && (
+                <p className="rounded-2xl bg-white/50 p-4 text-sm font-bold text-slate-500">
+                  이 매칭은 거절되었습니다.
+                </p>
+              )}
+
+              {!["pending", "rejected"].includes(application.status) && (
+                <p className="rounded-2xl bg-white/50 p-4 text-sm text-slate-500">
+                  진행 상황은 채팅 탭에서, 제출·완료 처리는 제출·완료 탭에서 확인하세요.
+                </p>
+              )}
+            </>
           )}
 
-          {application.status === "pending" && isOwner && (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={onAccept}
-                className="flex-1 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(15,23,42,0.5)] transition hover:brightness-110"
-              >
-                수락하고 시작하기
-              </button>
-              <button
-                type="button"
-                onClick={onReject}
-                className="glass-pill flex-1 rounded-2xl px-5 py-3 text-sm font-black text-slate-600 hover:bg-white/70"
-              >
-                거절하기
-              </button>
-            </div>
-          )}
-
-          {application.status === "pending" && isApplicant && (
-            <p className="rounded-2xl bg-amber-50/80 p-4 text-sm font-bold text-amber-700">
-              상대방의 수락을 기다리고 있어요. 48시간 안에 응답이 없으면 다른 미션을 찾아보는 걸 추천해요.
-            </p>
-          )}
-
-          {["accepted", "submitted", "disputed"].includes(application.status) && (
-            <div>
-              <p className="mb-2 text-xs font-black text-slate-400">진행 로그</p>
-              <div className="glass-pill max-h-56 space-y-2 overflow-y-auto rounded-2xl p-4">
+          {tab === "chat" && (
+            <div className="flex h-full flex-col">
+              <div className="flex-1 space-y-3 overflow-y-auto pb-3">
                 {messages.length === 0 ? (
-                  <p className="text-sm text-slate-400">
+                  <p className="rounded-2xl bg-white/50 p-4 text-center text-sm text-slate-400">
                     아직 메시지가 없어요. 첫 업데이트를 남겨보세요.
                   </p>
                 ) : (
-                  messages.map((message) => (
-                    <div key={message.id} className="text-sm">
-                      <span className="font-black text-slate-800">
-                        {message.sender_id === application.owner_id ? "파운더" : "지원자"}
-                      </span>
-                      <span className="ml-2 text-slate-600">{message.body}</span>
-                    </div>
-                  ))
+                  messages.map((message) => {
+                    const isMine = message.sender_id === currentUser.id;
+                    return (
+                      <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                        <div
+                          className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm leading-6 ${
+                            isMine
+                              ? "bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] text-white"
+                              : "glass-pill text-slate-700"
+                          }`}
+                        >
+                          {message.body}
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-2 flex gap-2 border-t border-white/60 pt-3">
                 <input
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && send()}
-                  placeholder="진행 상황을 짧게 남겨보세요"
+                  placeholder="메시지 보내기"
                   className="glass-pill flex-1 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
                 />
                 <button
@@ -130,87 +180,137 @@ function WorkspaceModal({
             </div>
           )}
 
-          {application.status === "accepted" && isApplicant && (
-            <div className="space-y-2">
-              <label className="block text-sm font-black text-slate-800">
-                제출물 (링크 또는 요약)
-                <textarea
-                  rows={3}
-                  value={submissionText}
-                  onChange={(event) => setSubmissionText(event.target.value)}
-                  placeholder="Figma 링크, 배포 URL, 또는 결과 요약을 남겨주세요"
-                  className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => onSubmitWork(submissionText)}
-                disabled={!submissionText.trim()}
-                className="w-full rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(16,185,129,0.5)] transition hover:brightness-105 disabled:opacity-50"
-              >
-                제출 완료
-              </button>
-            </div>
-          )}
-
-          {application.status === "submitted" && (
-            <div className="glass-pill rounded-2xl p-4">
-              <p className="text-xs font-black text-slate-400">제출된 내용</p>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                {application.submission_note}
-              </p>
-              {isOwner && (
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          {tab === "wrap" && (
+            <>
+              {application.status === "accepted" && isApplicant && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-black text-slate-800">
+                    제출물 (링크 또는 요약)
+                    <textarea
+                      rows={3}
+                      value={submissionText}
+                      onChange={(event) => setSubmissionText(event.target.value)}
+                      placeholder="Figma 링크, 배포 URL, 또는 결과 요약을 남겨주세요"
+                      className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                    />
+                  </label>
                   <button
                     type="button"
-                    onClick={onConfirmClose}
-                    className="flex-1 rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(16,185,129,0.5)] transition hover:brightness-105"
+                    onClick={() => onSubmitWork(submissionText)}
+                    disabled={!submissionText.trim()}
+                    className="w-full rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(16,185,129,0.5)] transition hover:brightness-105 disabled:opacity-50"
                   >
-                    완료 확인
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onRaiseDispute}
-                    className="flex-1 rounded-2xl border border-[#ff3b30]/30 bg-[#ff3b30]/5 px-5 py-3 text-sm font-black text-[#ff3b30] hover:bg-[#ff3b30]/10"
-                  >
-                    아직 완료가 아니에요
+                    제출 완료
                   </button>
                 </div>
               )}
-              {isApplicant && (
-                <p className="mt-3 text-xs font-bold text-slate-400">
-                  상대방의 완료 확인을 기다리고 있어요. 72시간 내 무응답 시 자동으로 종료돼요.
+
+              {application.status === "accepted" && isOwner && (
+                <p className="rounded-2xl bg-white/50 p-4 text-sm text-slate-500">
+                  지원자가 제출하면 여기서 완료 확인을 할 수 있어요.
                 </p>
               )}
-            </div>
-          )}
 
-          {application.status === "disputed" && (
-            <p className="rounded-2xl bg-[#ff3b30]/5 p-4 text-sm font-bold text-[#ff3b30]">
-              완료 여부에 대한 이견이 있어요. gotchi 운영자가 확인 후 다시 열어드릴게요.
-            </p>
-          )}
+              {application.status === "submitted" && (
+                <div className="glass-pill rounded-2xl p-4">
+                  <p className="text-xs font-black text-slate-400">제출된 내용</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                    {application.submission_note}
+                  </p>
+                  {isOwner && (
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={onConfirmClose}
+                        className="flex-1 rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(16,185,129,0.5)] transition hover:brightness-105"
+                      >
+                        완료 확인
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onRaiseDispute}
+                        className="flex-1 rounded-2xl border border-[#ff3b30]/30 bg-[#ff3b30]/5 px-5 py-3 text-sm font-black text-[#ff3b30] hover:bg-[#ff3b30]/10"
+                      >
+                        아직 완료가 아니에요
+                      </button>
+                    </div>
+                  )}
+                  {isApplicant && (
+                    <p className="mt-3 text-xs font-bold text-slate-400">
+                      상대방의 완료 확인을 기다리고 있어요. 72시간 내 무응답 시 자동으로 종료돼요.
+                    </p>
+                  )}
+                </div>
+              )}
 
-          {application.status === "closed" && (
-            <div className="glass-pill rounded-2xl p-4">
-              <p className="text-sm font-bold text-slate-700">
-                미션이 종료됐어요. 서로에 대한 리뷰를 남겨야 다음 미션에 지원할 수 있어요.
-              </p>
-              <button
-                type="button"
-                onClick={onOpenReview}
-                disabled={Boolean(myReview)}
-                className="mt-4 w-full rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(15,23,42,0.5)] transition hover:brightness-110 disabled:opacity-50"
-              >
-                {myReview ? "리뷰 완료" : "리뷰 남기기"}
-              </button>
-            </div>
-          )}
+              {application.status === "disputed" && (
+                <p className="rounded-2xl bg-[#ff3b30]/5 p-4 text-sm font-bold text-[#ff3b30]">
+                  완료 여부에 대한 이견이 있어요. gotchi 운영자가 확인 후 다시 열어드릴게요.
+                </p>
+              )}
 
-          {application.status === "rejected" && (
-            <p className="rounded-2xl bg-white/50 p-4 text-sm font-bold text-slate-500">
-              이 매칭은 거절되었습니다.
-            </p>
+              {["accepted", "submitted", "disputed", "closed"].includes(application.status) &&
+                application.type === "quest" && (
+                  <div className="glass-pill rounded-2xl p-4">
+                    <p className="text-xs font-black text-slate-400">정산 안내 (수동 확인)</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      gotchi는 아직 결제를 대행하지 않아요. 계좌 정보를 남기고, 입금을 직접 주고받은 뒤 확인 체크만 해주세요.
+                    </p>
+                    {isOwner ? (
+                      <div className="mt-3 space-y-2">
+                        <textarea
+                          rows={2}
+                          value={paymentNote}
+                          onChange={(event) => setPaymentNote(event.target.value)}
+                          placeholder="예: 카카오뱅크 3333-01-1234567 예금주 김도윤"
+                          className="w-full resize-none rounded-2xl bg-white/70 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => onUpdatePaymentNote(paymentNote)}
+                          className="w-full rounded-2xl bg-slate-950 px-4 py-2 text-sm font-black text-white hover:bg-slate-800"
+                        >
+                          계좌 정보 저장
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="mt-3 whitespace-pre-wrap text-sm font-bold text-slate-700">
+                        {application.payment_note || "아직 계좌 정보가 등록되지 않았어요."}
+                      </p>
+                    )}
+                    <label className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={application.payment_confirmed}
+                        onChange={(event) => onConfirmPayment(event.target.checked)}
+                      />
+                      입금을 확인했어요
+                    </label>
+                  </div>
+                )}
+
+              {application.status === "closed" && (
+                <div className="glass-pill rounded-2xl p-4">
+                  <p className="text-sm font-bold text-slate-700">
+                    미션이 종료됐어요. 서로에 대한 리뷰를 남겨야 다음 미션에 지원할 수 있어요.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onOpenReview}
+                    disabled={Boolean(myReview)}
+                    className="mt-4 w-full rounded-2xl bg-gradient-to-b from-slate-800 to-slate-950 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(15,23,42,0.5)] transition hover:brightness-110 disabled:opacity-50"
+                  >
+                    {myReview ? "리뷰 완료" : "리뷰 남기기"}
+                  </button>
+                </div>
+              )}
+
+              {["pending", "rejected"].includes(application.status) && (
+                <p className="rounded-2xl bg-white/50 p-4 text-sm text-slate-500">
+                  아직 진행 전이에요. 브리프 탭에서 수락 여부를 먼저 확인하세요.
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>
