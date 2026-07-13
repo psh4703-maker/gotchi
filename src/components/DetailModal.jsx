@@ -1,4 +1,7 @@
+import { useState } from "react";
+
 function DetailModal({ type, item, currentUser, myApplication, relatedQuest, onApply, onOpenWorkspace, onSelectQuest, onClose }) {
+  const [copied, setCopied] = useState(false);
   const isQuest = type === "quest";
   const accent = isQuest
     ? { text: "text-[#ff3b30]", chip: "bg-[#ff3b30]/10", grad: "from-[#ff5b4d] to-[#ff3b30]", ring: "shadow-[0_10px_20px_-8px_rgba(255,59,48,0.55)]" }
@@ -18,13 +21,26 @@ function DetailModal({ type, item, currentUser, myApplication, relatedQuest, onA
               {isQuest ? item.title : item.team_name}
             </h1>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="glass-pill shrink-0 rounded-full px-3 py-1 text-sm font-black text-slate-500 hover:text-slate-900"
-          >
-            x
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1800);
+              }}
+              className="glass-pill rounded-full px-3 py-1 text-sm font-black text-slate-500 hover:text-slate-900"
+            >
+              {copied ? "복사됨!" : "링크 복사"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="glass-pill rounded-full px-3 py-1 text-sm font-black text-slate-500 hover:text-slate-900"
+            >
+              x
+            </button>
+          </div>
         </div>
 
         <p className="mt-4 text-sm leading-7 text-slate-600">

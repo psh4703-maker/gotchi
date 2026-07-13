@@ -1,4 +1,15 @@
+import { useState } from "react";
+
 function QuestSection({ quests, onCreateQuest, onSelectQuest }) {
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const filteredQuests = quests.filter((quest) => {
+    if (!normalizedQuery) return true;
+    const haystack = [quest.title, quest.mission, ...(quest.skills ?? [])].join(" ").toLowerCase();
+    return haystack.includes(normalizedQuery);
+  });
+
   return (
     <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -22,18 +33,25 @@ function QuestSection({ quests, onCreateQuest, onSelectQuest }) {
           </button>
         </div>
 
-        {quests.length === 0 ? (
-          <div className="glass mt-8 rounded-3xl border-dashed p-10 text-center">
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="제목, 내용, 필요 역량으로 검색"
+          className="glass-pill mb-6 w-full rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#ff3b30]/15 sm:max-w-sm"
+        />
+
+        {filteredQuests.length === 0 ? (
+          <div className="glass mt-2 rounded-3xl border-dashed p-10 text-center">
             <h2 className="text-2xl font-black text-slate-950">
-              아직 등록된 미션이 없습니다
+              {quests.length === 0 ? "아직 등록된 미션이 없습니다" : "검색 결과가 없습니다"}
             </h2>
             <p className="mt-3 text-sm text-slate-500">
-              로그인 후 첫 팝업 미션을 올려보세요.
+              {quests.length === 0 ? "로그인 후 첫 팝업 미션을 올려보세요." : "다른 키워드로 검색해보세요."}
             </p>
           </div>
         ) : (
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {quests.map((quest) => (
+          <div className="mt-2 grid gap-5 md:grid-cols-3">
+            {filteredQuests.map((quest) => (
               <article
                 key={quest.id}
                 onClick={() => onSelectQuest?.(quest)}

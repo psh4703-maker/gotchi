@@ -1,4 +1,4 @@
-function PortfolioSection({ user, profile, quests, alliances, applications, reviews, onLogin, onOpenApplication, onDeleteQuest, onDeleteAlliance }) {
+function PortfolioSection({ user, profile, quests, alliances, applications, reviews, onLogin, onOpenApplication, onDeleteQuest, onDeleteAlliance, onEditProfile }) {
   if (!user) {
     return (
       <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
@@ -58,6 +58,13 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
               <p className="mt-2 text-sm font-medium text-slate-300">
                 {profile?.role || "Member"}
               </p>
+              <button
+                type="button"
+                onClick={onEditProfile}
+                className="mt-3 rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-white transition hover:bg-white/20"
+              >
+                프로필 수정
+              </button>
             </div>
 
             <TrustScoreRing score={trust.score} isRookie={trust.isRookie} />

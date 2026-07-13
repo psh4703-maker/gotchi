@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSelectQuest, onSelectAlliance }) {
   const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
 
   const feedItems = useMemo(() => {
     const questItems = quests.map((quest) => ({ ...quest, type: "quest" }));
@@ -15,8 +16,18 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
     );
   }, [quests, alliances]);
 
-  const filteredItems =
-    filter === "all" ? feedItems : feedItems.filter((item) => item.type === filter);
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const filteredItems = feedItems
+    .filter((item) => filter === "all" || item.type === filter)
+    .filter((item) => {
+      if (!normalizedQuery) return true;
+      const haystack =
+        item.type === "quest"
+          ? [item.title, item.mission, ...(item.skills ?? [])]
+          : [item.team_name, item.vision, ...(item.roles ?? []), ...(item.values ?? [])];
+      return haystack.join(" ").toLowerCase().includes(normalizedQuery);
+    });
 
   return (
     <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
@@ -52,25 +63,33 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
           </div>
         </div>
 
-        <div className="glass mb-6 flex flex-wrap gap-2 rounded-2xl p-2">
-          {[
-            ["all", "전체 보기"],
-            ["quest", "팝업 미션만 보기"],
-            ["alliance", "빌드업 팀 모집만 보기"],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setFilter(id)}
-              className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
-                filter === id
-                  ? "bg-slate-950 text-white shadow-[0_10px_18px_-8px_rgba(15,23,42,0.5)]"
-                  : "text-slate-500 hover:bg-white/60"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="glass mb-6 flex flex-col gap-3 rounded-2xl p-2 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap gap-2">
+            {[
+              ["all", "전체 보기"],
+              ["quest", "팝업 미션만 보기"],
+              ["alliance", "빌드업 팀 모집만 보기"],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setFilter(id)}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+                  filter === id
+                    ? "bg-slate-950 text-white shadow-[0_10px_18px_-8px_rgba(15,23,42,0.5)]"
+                    : "text-slate-500 hover:bg-white/60"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="제목, 내용, 역량으로 검색"
+            className="glass-pill w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15 sm:ml-auto sm:w-64"
+          />
         </div>
 
         {filteredItems.length === 0 ? (

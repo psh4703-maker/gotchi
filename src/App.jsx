@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AllianceSection from "./components/AllianceSection";
 import HomeSection from "./components/HomeSection";
 import PortfolioSection from "./components/PortfolioSection";
@@ -9,6 +9,8 @@ import DetailModal from "./components/DetailModal";
 import WorkspaceModal from "./components/WorkspaceModal";
 import ReviewModal from "./components/ReviewModal";
 import MultiSelectChips from "./components/MultiSelectChips";
+import EditProfileModal from "./components/EditProfileModal";
+import Footer from "./components/Footer";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
@@ -71,6 +73,7 @@ function App() {
   const [alliances, setAlliances] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [authMode, setAuthMode] = useState("sign-in");
   const [statusMessage, setStatusMessage] = useState("");
   const [questForm, setQuestForm] = useState(emptyQuestForm);
@@ -130,6 +133,39 @@ function App() {
     loadReviews(currentUser.id);
   }, [currentUser]);
 
+  const didResolveDeepLink = useRef(false);
+
+  useEffect(() => {
+    if (didResolveDeepLink.current) return;
+    if (quests.length === 0 && alliances.length === 0) return;
+
+    const match = window.location.pathname.match(/^\/(quest|alliance)\/([^/]+)$/);
+    if (match) {
+      const [, type, id] = match;
+      const item = (type === "quest" ? quests : alliances).find((entry) => entry.id === id);
+      if (item) {
+        setDetailTarget({ item, type });
+      }
+    }
+    didResolveDeepLink.current = true;
+  }, [quests, alliances]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const match = window.location.pathname.match(/^\/(quest|alliance)\/([^/]+)$/);
+      if (!match) {
+        setDetailTarget(null);
+        return;
+      }
+      const [, type, id] = match;
+      const item = (type === "quest" ? quests : alliances).find((entry) => entry.id === id);
+      setDetailTarget(item ? { item, type } : null);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [quests, alliances]);
+
   const loadPublicData = async () => {
     const [{ data: questData, error: questError }, { data: allianceData, error: allianceError }] =
       await Promise.all([
@@ -158,6 +194,22 @@ function App() {
     if (!error) {
       setProfile(data);
     }
+  };
+
+  const updateProfile = async (displayName, role) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: displayName, role })
+      .eq("id", currentUser.id);
+
+    if (error) {
+      setStatusMessage(error.message);
+      return;
+    }
+
+    setIsEditProfileOpen(false);
+    setStatusMessage("프로필이 업데이트됐어요.");
+    await loadProfile(currentUser.id);
   };
 
   const requireAuth = (nextTab) => {
@@ -310,8 +362,17 @@ function App() {
     });
   };
 
-  const openDetail = (item, type) => setDetailTarget({ item, type });
-  const closeDetail = () => setDetailTarget(null);
+  const openDetail = (item, type) => {
+    setDetailTarget({ item, type });
+    window.history.pushState(null, "", `/${type}/${item.id}`);
+  };
+
+  const closeDetail = () => {
+    setDetailTarget(null);
+    if (window.location.pathname !== "/") {
+      window.history.pushState(null, "", "/");
+    }
+  };
 
   const openApply = (item, type) => {
     if (!currentUser) {
@@ -588,6 +649,7 @@ function App() {
             onOpenApplication={openWorkspace}
             onDeleteQuest={deleteQuest}
             onDeleteAlliance={deleteAlliance}
+            onEditProfile={() => setIsEditProfileOpen(true)}
           />
         );
       case "create-quest":
@@ -713,6 +775,8 @@ function App() {
 
       <main>{renderSection()}</main>
 
+      <Footer />
+
       {detailTarget && (
         <DetailModal
           type={detailTarget.type}
@@ -767,6 +831,14 @@ function App() {
         <ReviewModal
           onSubmit={(payload) => submitReviewForApp(reviewApp, payload)}
           onClose={() => setReviewApp(null)}
+        />
+      )}
+
+      {isEditProfileOpen && (
+        <EditProfileModal
+          profile={profile}
+          onSubmit={updateProfile}
+          onClose={() => setIsEditProfileOpen(false)}
         />
       )}
 
