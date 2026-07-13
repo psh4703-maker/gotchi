@@ -70,6 +70,7 @@ function App() {
   const [quests, setQuests] = useState([]);
   const [alliances, setAlliances] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [authMode, setAuthMode] = useState("sign-in");
   const [statusMessage, setStatusMessage] = useState("");
   const [questForm, setQuestForm] = useState(emptyQuestForm);
@@ -98,8 +99,11 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
+      if (event === "PASSWORD_RECOVERY") {
+        setIsResetPasswordOpen(true);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -775,8 +779,30 @@ function App() {
           onError={setStatusMessage}
         />
       )}
+
+      {isResetPasswordOpen && (
+        <ResetPasswordModal
+          onClose={() => setIsResetPasswordOpen(false)}
+          onDone={(message) => {
+            setIsResetPasswordOpen(false);
+            setStatusMessage(message);
+          }}
+        />
+      )}
     </div>
   );
+}
+
+function translateAuthError(message) {
+  const map = {
+    "User already registered": "이미 가입된 이메일이에요. 로그인하거나 비밀번호를 찾아주세요.",
+    "Invalid login credentials": "이메일 또는 비밀번호가 올바르지 않아요.",
+    "Email not confirmed": "이메일 인증이 아직 안 됐어요. 받은 메일함을 확인해주세요.",
+    "Password should be at least 6 characters": "비밀번호는 최소 6자 이상이어야 해요.",
+    "For security purposes, you can only request this after 60 seconds.":
+      "보안을 위해 재전송은 60초 뒤에 다시 시도할 수 있어요.",
+  };
+  return map[message] ?? message;
 }
 
 function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
@@ -787,8 +813,10 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
     role: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const isSignUp = mode === "sign-up";
+  const isForgot = mode === "forgot";
 
   const submit = async (event) => {
     event.preventDefault();
@@ -799,6 +827,22 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
     }
 
     setIsLoading(true);
+
+    if (isForgot) {
+      const { error } = await supabase.auth.resetPasswordForEmail(form.email, {
+        redirectTo: window.location.origin,
+      });
+
+      setIsLoading(false);
+
+      if (error) {
+        onError(translateAuthError(error.message));
+        return;
+      }
+
+      setResetSent(true);
+      return;
+    }
 
     if (isSignUp) {
       const { data, error } = await supabase.auth.signUp({
@@ -813,7 +857,13 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
       });
 
       if (error) {
-        onError(error.message);
+        onError(translateAuthError(error.message));
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.user?.identities?.length === 0) {
+        onError("이미 가입된 이메일이에요. 로그인하거나 비밀번호를 찾아주세요.");
         setIsLoading(false);
         return;
       }
@@ -828,7 +878,7 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
       });
 
       if (error) {
-        onError(error.message);
+        onError(translateAuthError(error.message));
         setIsLoading(false);
         return;
       }
@@ -845,10 +895,12 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
           <div>
             <p className="text-sm font-black text-[#0a84ff]">gotchi account</p>
             <h2 className="mt-2 text-2xl font-black text-slate-950">
-              {isSignUp ? "회원가입" : "로그인"}
+              {isForgot ? "비밀번호 찾기" : isSignUp ? "회원가입" : "로그인"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              실제 이메일과 비밀번호로 Supabase Auth에 연결됩니다.
+              {isForgot
+                ? "가입할 때 쓴 이메일로 재설정 링크를 보내드려요."
+                : "실제 이메일과 비밀번호로 Supabase Auth에 연결됩니다."}
             </p>
           </div>
           <button type="button" onClick={onClose} className="glass-pill rounded-full px-3 py-1 text-sm font-black text-slate-500 hover:text-slate-900">
@@ -856,51 +908,151 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
           </button>
         </div>
 
-        {isSignUp && (
-          <>
+        {isForgot ? (
+          resetSent ? (
+            <p className="mt-6 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-700">
+              {form.email}(으)로 재설정 링크를 보냈어요. 메일함(스팸함도)을 확인해주세요.
+            </p>
+          ) : (
             <TextInput
-              label="이름"
-              value={form.displayName}
-              onChange={(value) => setForm((prev) => ({ ...prev, displayName: value }))}
-              placeholder="예: 박승혁"
+              label="이메일"
+              type="email"
+              value={form.email}
+              onChange={(value) => setForm((prev) => ({ ...prev, email: value }))}
+              placeholder="you@example.com"
+            />
+          )
+        ) : (
+          <>
+            {isSignUp && (
+              <>
+                <TextInput
+                  label="이름"
+                  value={form.displayName}
+                  onChange={(value) => setForm((prev) => ({ ...prev, displayName: value }))}
+                  placeholder="예: 박승혁"
+                />
+                <TextInput
+                  label="주요 역할"
+                  value={form.role}
+                  onChange={(value) => setForm((prev) => ({ ...prev, role: value }))}
+                  placeholder="예: Founder, Designer, Developer"
+                />
+              </>
+            )}
+
+            <TextInput
+              label="이메일"
+              type="email"
+              value={form.email}
+              onChange={(value) => setForm((prev) => ({ ...prev, email: value }))}
+              placeholder="you@example.com"
             />
             <TextInput
-              label="주요 역할"
-              value={form.role}
-              onChange={(value) => setForm((prev) => ({ ...prev, role: value }))}
-              placeholder="예: Founder, Designer, Developer"
+              label="비밀번호"
+              type="password"
+              value={form.password}
+              onChange={(value) => setForm((prev) => ({ ...prev, password: value }))}
+              placeholder="8자 이상"
             />
           </>
         )}
 
-        <TextInput
-          label="이메일"
-          type="email"
-          value={form.email}
-          onChange={(value) => setForm((prev) => ({ ...prev, email: value }))}
-          placeholder="you@example.com"
-        />
-        <TextInput
-          label="비밀번호"
-          type="password"
-          value={form.password}
-          onChange={(value) => setForm((prev) => ({ ...prev, password: value }))}
-          placeholder="8자 이상"
-        />
+        {!resetSent && (
+          <button
+            disabled={isLoading}
+            className="mt-6 w-full rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.6)] transition hover:brightness-105 disabled:opacity-50"
+          >
+            {isLoading
+              ? "처리 중..."
+              : isForgot
+                ? "재설정 링크 보내기"
+                : isSignUp
+                  ? "회원가입하기"
+                  : "로그인하기"}
+          </button>
+        )}
+
+        {!isForgot && !isSignUp && (
+          <button
+            type="button"
+            onClick={() => setMode("forgot")}
+            className="mt-3 w-full text-xs font-bold text-slate-400 hover:text-slate-700"
+          >
+            비밀번호를 잊으셨나요?
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setMode(isForgot ? "sign-in" : isSignUp ? "sign-in" : "sign-up")}
+          className="mt-4 w-full text-sm font-bold text-slate-500 hover:text-slate-950"
+        >
+          {isForgot ? "로그인으로 돌아가기" : isSignUp ? "이미 계정이 있어요" : "처음이라면 회원가입하기"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function ResetPasswordModal({ onClose, onDone }) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setError("");
+
+    if (password.length < 6) {
+      setError("비밀번호는 최소 6자 이상이어야 해요.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("두 비밀번호가 서로 달라요.");
+      return;
+    }
+
+    setIsLoading(true);
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+    setIsLoading(false);
+
+    if (updateError) {
+      setError(translateAuthError(updateError.message));
+      return;
+    }
+
+    onDone("비밀번호가 변경됐어요. 새 비밀번호로 로그인해주세요.");
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-md">
+      <form onSubmit={submit} className="glass-strong w-full max-w-md rounded-[28px] p-6">
+        <p className="text-sm font-black text-[#0a84ff]">gotchi account</p>
+        <h2 className="mt-2 text-2xl font-black text-slate-950">새 비밀번호 설정</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          새로 사용할 비밀번호를 입력해주세요.
+        </p>
+
+        <TextInput label="새 비밀번호" type="password" value={password} onChange={setPassword} placeholder="6자 이상" />
+        <TextInput label="새 비밀번호 확인" type="password" value={confirm} onChange={setConfirm} placeholder="다시 한 번 입력" />
+
+        {error && <p className="mt-3 text-sm font-bold text-[#ff3b30]">{error}</p>}
 
         <button
           disabled={isLoading}
           className="mt-6 w-full rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.6)] transition hover:brightness-105 disabled:opacity-50"
         >
-          {isLoading ? "처리 중..." : isSignUp ? "회원가입하기" : "로그인하기"}
+          {isLoading ? "변경 중..." : "비밀번호 변경하기"}
         </button>
 
         <button
           type="button"
-          onClick={() => setMode(isSignUp ? "sign-in" : "sign-up")}
+          onClick={onClose}
           className="mt-4 w-full text-sm font-bold text-slate-500 hover:text-slate-950"
         >
-          {isSignUp ? "이미 계정이 있어요" : "처음이라면 회원가입하기"}
+          취소
         </button>
       </form>
     </div>
