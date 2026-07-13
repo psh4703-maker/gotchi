@@ -11,6 +11,7 @@ import ReviewModal from "./components/ReviewModal";
 import MultiSelectChips from "./components/MultiSelectChips";
 import EditProfileModal from "./components/EditProfileModal";
 import Footer from "./components/Footer";
+import AdminSection from "./components/AdminSection";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
@@ -44,6 +45,11 @@ const VALUE_OPTIONS = ["빠른 실험", "고객 집착", "투명한 커뮤니케
 const WORK_TYPE_OPTIONS = ["Remote-first", "주 1회 오프라인", "주 2-3회 오프라인", "상근(출근)"];
 const JOIN_PROCESS_OPTIONS = ["바로 정식 합류", "1개월 협업 후 논의", "3개월 협업 후 논의", "팝업 미션 완료 후 논의"];
 const MEMBER_TYPE_OPTIONS = ["Full-time", "Part-time", "Advisor"];
+
+function friendlyError(message) {
+  if (!message) return message;
+  return message.replace(/^RATE_LIMIT:\s*/, "");
+}
 
 const emptyQuestForm = {
   title: "",
@@ -79,6 +85,7 @@ function App() {
   const [questForm, setQuestForm] = useState(emptyQuestForm);
   const [allianceForm, setAllianceForm] = useState(emptyAllianceForm);
   const [applications, setApplications] = useState([]);
+  const [adminApplications, setAdminApplications] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [detailTarget, setDetailTarget] = useState(null); // { item, type }
   const [applyTarget, setApplyTarget] = useState(null); // { item, type }
@@ -203,7 +210,7 @@ function App() {
       .eq("id", currentUser.id);
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
 
@@ -250,7 +257,7 @@ function App() {
     });
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
 
@@ -280,7 +287,7 @@ function App() {
     });
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
 
@@ -293,7 +300,7 @@ function App() {
     if (!window.confirm("이 미션을 삭제할까요? 되돌릴 수 없어요.")) return;
     const { error } = await supabase.from("quests").delete().eq("id", quest.id);
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     await loadPublicData();
@@ -303,13 +310,45 @@ function App() {
     if (!window.confirm("이 팀 모집글을 삭제할까요? 되돌릴 수 없어요.")) return;
     const { error } = await supabase.from("alliances").delete().eq("id", alliance.id);
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     await loadPublicData();
   };
 
   // ---- Matching workflow: 지원 -> 수락 -> 워크스페이스 -> 완료 -> 리뷰 ----
+
+  useEffect(() => {
+    if (!profile?.is_admin || !isSupabaseConfigured) {
+      setAdminApplications([]);
+      return;
+    }
+
+    supabase
+      .from("applications")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (!error) setAdminApplications(data ?? []);
+      });
+  }, [profile]);
+
+  const resolveDispute = async (application, status) => {
+    const { error } = await supabase
+      .from("applications")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", application.id);
+
+    if (error) {
+      setStatusMessage(friendlyError(error.message));
+      return;
+    }
+
+    setStatusMessage("분쟁이 처리됐어요.");
+    const { data } = await supabase.from("applications").select("*").order("updated_at", { ascending: false });
+    setAdminApplications(data ?? []);
+    if (currentUser) await loadApplications(currentUser.id);
+  };
 
   const loadApplications = async (userId) => {
     const { data, error } = await supabase
@@ -427,7 +466,7 @@ function App() {
     });
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     await loadMessages(workspaceApp.id);
@@ -447,7 +486,7 @@ function App() {
     });
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
 
@@ -477,7 +516,7 @@ function App() {
       .eq("id", application.id);
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     await refreshWorkspaceApp(application.id, currentUser.id);
@@ -495,7 +534,7 @@ function App() {
       .eq("id", application.id);
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     await refreshWorkspaceApp(application.id, currentUser.id);
@@ -508,7 +547,7 @@ function App() {
       .eq("id", application.id);
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     await refreshWorkspaceApp(application.id, currentUser.id);
@@ -521,7 +560,7 @@ function App() {
       .eq("id", application.id);
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     setStatusMessage(
@@ -537,7 +576,7 @@ function App() {
       .eq("id", application.id);
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     await refreshWorkspaceApp(application.id, currentUser.id);
@@ -550,7 +589,7 @@ function App() {
       .eq("id", application.id);
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
     await refreshWorkspaceApp(application.id, currentUser.id);
@@ -567,7 +606,7 @@ function App() {
     });
 
     if (error) {
-      setStatusMessage(error.message);
+      setStatusMessage(friendlyError(error.message));
       return;
     }
 
@@ -652,6 +691,15 @@ function App() {
             onEditProfile={() => setIsEditProfileOpen(true)}
           />
         );
+      case "admin":
+        return profile?.is_admin ? (
+          <AdminSection
+            applications={adminApplications}
+            quests={quests}
+            alliances={alliances}
+            onResolve={resolveDispute}
+          />
+        ) : null;
       case "create-quest":
         return (
           <CreateQuestSection
@@ -699,7 +747,7 @@ function App() {
 
           <div className="flex flex-wrap items-center gap-2">
             <div className="glass-pill flex items-center gap-1 rounded-full p-1">
-              {tabs.map((tab) => {
+              {(profile?.is_admin ? [...tabs, { id: "admin", label: "Admin" }] : tabs).map((tab) => {
                 const isActive = activeTab === tab.id;
 
                 return (

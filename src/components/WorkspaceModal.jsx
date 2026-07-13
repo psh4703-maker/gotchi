@@ -50,7 +50,7 @@ function WorkspaceModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8 backdrop-blur-md">
-      <div className="glass-strong flex h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[32px]">
+      <div className="glass-strong flex h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] sm:h-[85vh] sm:rounded-[32px]">
         <div className="flex items-start justify-between gap-4 border-b border-white/60 px-6 py-5 sm:px-8">
           <div>
             <p className="text-xs font-black text-slate-400">
@@ -87,7 +87,7 @@ function WorkspaceModal({
           ))}
         </div>
 
-        <div className="flex flex-1 flex-col overflow-y-auto px-6 py-5 sm:px-8">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5 sm:px-8">
           {tab === "brief" && (
             <div className="space-y-5">
               {application.note && (
@@ -143,7 +143,7 @@ function WorkspaceModal({
           )}
 
           {tab === "chat" && (
-            <div className="flex h-full flex-col">
+            <div className="flex h-full min-h-0 flex-col">
               <div className="flex-1 space-y-3 overflow-y-auto pb-3">
                 {messages.length === 0 ? (
                   <p className="rounded-2xl bg-white/50 p-4 text-center text-sm text-slate-400">

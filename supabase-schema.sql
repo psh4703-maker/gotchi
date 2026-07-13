@@ -4,8 +4,11 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null,
   role text not null default 'Founder',
+  is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists is_admin boolean not null default false;
 
 create table if not exists public.quests (
   id uuid primary key default gen_random_uuid(),
@@ -175,11 +178,21 @@ alter table public.applications enable row level security;
 alter table public.application_messages enable row level security;
 alter table public.reviews enable row level security;
 
+-- helper: checks whether the current user is an admin (used by dispute-resolution policies)
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+as $$
+  select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
+$$;
+
 -- applications: only the two participants can see or touch a match
 drop policy if exists "Participants can read their applications" on public.applications;
 create policy "Participants can read their applications"
 on public.applications for select
-using (auth.uid() = applicant_id or auth.uid() = owner_id);
+using (auth.uid() = applicant_id or auth.uid() = owner_id or public.is_admin());
 
 drop policy if exists "Logged-in users can apply" on public.applications;
 create policy "Logged-in users can apply"
@@ -189,7 +202,7 @@ with check (auth.uid() = applicant_id and auth.uid() <> owner_id);
 drop policy if exists "Participants can update application status" on public.applications;
 create policy "Participants can update application status"
 on public.applications for update
-using (auth.uid() = applicant_id or auth.uid() = owner_id);
+using (auth.uid() = applicant_id or auth.uid() = owner_id or public.is_admin());
 
 -- messages: only participants of the parent application
 drop policy if exists "Participants can read messages" on public.application_messages;
@@ -201,6 +214,7 @@ using (
     where a.id = application_id
       and (a.applicant_id = auth.uid() or a.owner_id = auth.uid())
   )
+  or public.is_admin()
 );
 
 drop policy if exists "Participants can send messages" on public.application_messages;
@@ -222,7 +236,7 @@ drop policy if exists "Public reviews are readable by everyone, private by parti
 create policy "Public reviews are readable by everyone, private by participants"
 on public.reviews for select
 using (
-  is_public = true or auth.uid() = reviewer_id or auth.uid() = reviewee_id
+  is_public = true or auth.uid() = reviewer_id or auth.uid() = reviewee_id or public.is_admin()
 );
 
 drop policy if exists "Participants can leave one review after closing" on public.reviews;
@@ -284,3 +298,226 @@ select cron.schedule(
   '0 * * * *',
   $$select public.auto_resolve_stale_applications();$$
 );
+
+-- ============================================================
+-- 스팸/어뷰징 방지: 하루 업로드·지원 개수 제한 (DB 레벨, 우회 불가)
+-- ============================================================
+
+create or replace function public.enforce_quest_rate_limit()
+returns trigger language plpgsql as $$
+begin
+  if (select count(*) from public.quests where owner_id = new.owner_id and created_at > now() - interval '24 hours') >= 10 then
+    raise exception 'RATE_LIMIT: 하루에 올릴 수 있는 팝업 미션은 최대 10개예요. 내일 다시 시도해주세요.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists quests_rate_limit on public.quests;
+create trigger quests_rate_limit
+before insert on public.quests
+for each row execute function public.enforce_quest_rate_limit();
+
+create or replace function public.enforce_alliance_rate_limit()
+returns trigger language plpgsql as $$
+begin
+  if (select count(*) from public.alliances where owner_id = new.owner_id and created_at > now() - interval '24 hours') >= 5 then
+    raise exception 'RATE_LIMIT: 하루에 올릴 수 있는 팀 모집글은 최대 5개예요. 내일 다시 시도해주세요.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists alliances_rate_limit on public.alliances;
+create trigger alliances_rate_limit
+before insert on public.alliances
+for each row execute function public.enforce_alliance_rate_limit();
+
+create or replace function public.enforce_application_rate_limit()
+returns trigger language plpgsql as $$
+begin
+  if (select count(*) from public.applications where applicant_id = new.applicant_id and created_at > now() - interval '24 hours') >= 20 then
+    raise exception 'RATE_LIMIT: 하루에 지원할 수 있는 횟수는 최대 20건이에요. 내일 다시 시도해주세요.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists applications_rate_limit on public.applications;
+create trigger applications_rate_limit
+before insert on public.applications
+for each row execute function public.enforce_application_rate_limit();
+
+-- ============================================================
+-- 이메일 알림: Resend API를 Postgres(pg_net)에서 직접 호출.
+-- app_config에 실제 Resend API 키를 넣기 전까지는 조용히 무시됨(에러 없음).
+-- ============================================================
+
+create extension if not exists pg_net;
+
+create table if not exists public.app_config (
+  key text primary key,
+  value text not null
+);
+
+alter table public.app_config enable row level security;
+-- 의도적으로 정책을 하나도 안 둠: anon/authenticated 역할은 이 테이블을 절대 못 읽음.
+-- security definer 함수(postgres 소유)만 내부적으로 접근 가능.
+
+insert into public.app_config (key, value) values
+  ('resend_api_key', 'REPLACE_WITH_YOUR_RESEND_API_KEY'),
+  ('from_email', 'gotchi <onboarding@resend.dev>')
+on conflict (key) do nothing;
+
+create or replace function public.send_email(to_email text, subject text, html text)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  api_key text;
+  sender text;
+begin
+  if to_email is null then
+    return;
+  end if;
+
+  select value into api_key from public.app_config where key = 'resend_api_key';
+  select value into sender from public.app_config where key = 'from_email';
+
+  if api_key is null or api_key = 'REPLACE_WITH_YOUR_RESEND_API_KEY' then
+    return; -- 아직 API 키 설정 전이면 조용히 스킵
+  end if;
+
+  perform net.http_post(
+    url := 'https://api.resend.com/emails',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || api_key,
+      'Content-Type', 'application/json'
+    ),
+    body := jsonb_build_object(
+      'from', sender,
+      'to', to_email,
+      'subject', subject,
+      'html', html
+    )
+  );
+end;
+$$;
+
+create or replace function public.notify_new_application()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  owner_email text;
+  mission_title text;
+begin
+  select email into owner_email from auth.users where id = new.owner_id;
+
+  if new.type = 'quest' then
+    select title into mission_title from public.quests where id = new.quest_id;
+  else
+    select team_name into mission_title from public.alliances where id = new.alliance_id;
+  end if;
+
+  perform public.send_email(
+    owner_email,
+    'gotchi: 새 지원이 도착했어요',
+    '<p>"' || coalesce(mission_title, '') || '"에 새 지원이 도착했어요. gotchi Workspace 탭에서 확인해주세요.</p>'
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists on_application_created on public.applications;
+create trigger on_application_created
+after insert on public.applications
+for each row execute function public.notify_new_application();
+
+create or replace function public.notify_application_status_change()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  target_email text;
+  mission_title text;
+  subject text;
+  body text;
+begin
+  if new.status = old.status then
+    return new;
+  end if;
+
+  if new.type = 'quest' then
+    select title into mission_title from public.quests where id = new.quest_id;
+  else
+    select team_name into mission_title from public.alliances where id = new.alliance_id;
+  end if;
+
+  if new.status = 'accepted' then
+    select email into target_email from auth.users where id = new.applicant_id;
+    subject := 'gotchi: 지원이 수락됐어요';
+    body := '<p>"' || coalesce(mission_title, '') || '" 지원이 수락됐어요. Workspace에서 진행해주세요.</p>';
+  elsif new.status = 'submitted' then
+    select email into target_email from auth.users where id = new.owner_id;
+    subject := 'gotchi: 제출물이 도착했어요';
+    body := '<p>"' || coalesce(mission_title, '') || '" 제출물을 확인해주세요.</p>';
+  elsif new.status = 'closed' then
+    select email into target_email from auth.users where id = new.applicant_id;
+    perform public.send_email(target_email, 'gotchi: 미션이 종료됐어요', '<p>"' || coalesce(mission_title, '') || '"가 종료됐어요. 리뷰를 남겨주세요.</p>');
+    select email into target_email from auth.users where id = new.owner_id;
+    subject := 'gotchi: 미션이 종료됐어요';
+    body := '<p>"' || coalesce(mission_title, '') || '"가 종료됐어요. 리뷰를 남겨주세요.</p>';
+  elsif new.status = 'rejected' then
+    select email into target_email from auth.users where id = new.applicant_id;
+    subject := 'gotchi: 지원 결과 안내';
+    body := '<p>"' || coalesce(mission_title, '') || '" 지원이 아쉽게 거절됐어요.</p>';
+  elsif new.status = 'expired' then
+    select email into target_email from auth.users where id = new.applicant_id;
+    subject := 'gotchi: 지원이 자동 만료됐어요';
+    body := '<p>"' || coalesce(mission_title, '') || '" 지원에 48시간 동안 응답이 없어 자동 만료됐어요.</p>';
+  else
+    return new;
+  end if;
+
+  perform public.send_email(target_email, subject, body);
+  return new;
+end;
+$$;
+
+drop trigger if exists on_application_status_change on public.applications;
+create trigger on_application_status_change
+after update on public.applications
+for each row execute function public.notify_application_status_change();
+
+create or replace function public.notify_new_message()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  recipient_id uuid;
+  recipient_email text;
+begin
+  select case when new.sender_id = a.applicant_id then a.owner_id else a.applicant_id end
+  into recipient_id
+  from public.applications a where a.id = new.application_id;
+
+  select email into recipient_email from auth.users where id = recipient_id;
+
+  perform public.send_email(
+    recipient_email,
+    'gotchi: 새 메시지가 도착했어요',
+    '<p>워크스페이스에 새 메시지가 도착했어요: "' || left(new.body, 80) || '"</p>'
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists on_message_created on public.application_messages;
+create trigger on_message_created
+after insert on public.application_messages
+for each row execute function public.notify_new_message();
