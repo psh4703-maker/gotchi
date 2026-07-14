@@ -1,3 +1,5 @@
+import Avatar from "./Avatar";
+
 function PortfolioSection({ user, profile, quests, alliances, applications, reviews, onLogin, onOpenApplication, onDeleteQuest, onDeleteAlliance, onEditProfile }) {
   if (!user) {
     return (
@@ -48,23 +50,26 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="glass-strong overflow-hidden rounded-[32px]">
           <div className="flex flex-col gap-6 bg-gradient-to-br from-slate-950 via-slate-900 to-[#0a2a52] px-6 py-8 text-white sm:flex-row sm:items-center sm:justify-between sm:px-8">
-            <div>
-              <p className="text-sm font-bold text-blue-200">
-                gotchi member profile
-              </p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-                {profile?.display_name || user.email}
-              </h1>
-              <p className="mt-2 text-sm font-medium text-slate-300">
-                {profile?.role || "Member"}
-              </p>
-              <button
-                type="button"
-                onClick={onEditProfile}
-                className="mt-3 rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-white transition hover:bg-white/20"
-              >
-                프로필 수정
-              </button>
+            <div className="flex items-center gap-4">
+              <Avatar avatarUrl={profile?.avatar_url} name={profile?.display_name || user.email} size={64} />
+              <div>
+                <p className="text-sm font-bold text-blue-200">
+                  gotchi member profile
+                </p>
+                <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+                  {profile?.display_name || user.email}
+                </h1>
+                <p className="mt-2 text-sm font-medium text-slate-300">
+                  {profile?.role || "Member"}
+                </p>
+                <button
+                  type="button"
+                  onClick={onEditProfile}
+                  className="mt-3 rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-white transition hover:bg-white/20"
+                >
+                  프로필 수정
+                </button>
+              </div>
             </div>
 
             <TrustScoreRing score={trust.score} isRookie={trust.isRookie} />

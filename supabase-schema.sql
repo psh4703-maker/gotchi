@@ -521,3 +521,228 @@ drop trigger if exists on_message_created on public.application_messages;
 create trigger on_message_created
 after insert on public.application_messages
 for each row execute function public.notify_new_message();
+
+-- ============================================================
+-- 회원 탈퇴: 본인 계정을 삭제. auth.users 삭제 시 profiles/quests/
+-- alliances/applications/reviews/messages가 on delete cascade로 자동 정리됨.
+-- ============================================================
+
+create or replace function public.delete_own_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+grant execute on function public.delete_own_account() to authenticated;
+
+-- ============================================================
+-- 프로필 사진: Storage 버킷 + 프로필 컬럼
+-- ============================================================
+
+alter table public.profiles add column if not exists avatar_url text not null default '';
+
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Avatar images are publicly accessible" on storage.objects;
+create policy "Avatar images are publicly accessible"
+on storage.objects for select
+using (bucket_id = 'avatars');
+
+drop policy if exists "Users can upload their own avatar" on storage.objects;
+create policy "Users can upload their own avatar"
+on storage.objects for insert
+with check (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+drop policy if exists "Users can update their own avatar" on storage.objects;
+create policy "Users can update their own avatar"
+on storage.objects for update
+using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+drop policy if exists "Users can delete their own avatar" on storage.objects;
+create policy "Users can delete their own avatar"
+on storage.objects for delete
+using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+-- ============================================================
+-- 인앱 알림: 이메일과 같은 트리거에서 함께 기록되는 알림 테이블
+-- ============================================================
+
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  application_id uuid references public.applications(id) on delete cascade,
+  title text not null,
+  body text not null,
+  is_read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table public.notifications enable row level security;
+
+drop policy if exists "Users can read their own notifications" on public.notifications;
+create policy "Users can read their own notifications"
+on public.notifications for select
+using (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own notifications" on public.notifications;
+create policy "Users can update their own notifications"
+on public.notifications for update
+using (auth.uid() = user_id);
+
+create or replace function public.create_notification(
+  target_user_id uuid,
+  target_application_id uuid,
+  notif_title text,
+  notif_body text
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  if target_user_id is null then
+    return;
+  end if;
+
+  insert into public.notifications (user_id, application_id, title, body)
+  values (target_user_id, target_application_id, notif_title, notif_body);
+end;
+$$;
+
+-- 기존 알림 트리거 함수들을 확장해서, 이메일과 함께 인앱 알림도 같이 기록
+
+create or replace function public.notify_new_application()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  owner_email text;
+  mission_title text;
+begin
+  select email into owner_email from auth.users where id = new.owner_id;
+
+  if new.type = 'quest' then
+    select title into mission_title from public.quests where id = new.quest_id;
+  else
+    select team_name into mission_title from public.alliances where id = new.alliance_id;
+  end if;
+
+  perform public.send_email(
+    owner_email,
+    'gotchi: 새 지원이 도착했어요',
+    '<p>"' || coalesce(mission_title, '') || '"에 새 지원이 도착했어요. gotchi Workspace 탭에서 확인해주세요.</p>'
+  );
+
+  perform public.create_notification(
+    new.owner_id,
+    new.id,
+    '새 지원이 도착했어요',
+    '"' || coalesce(mission_title, '') || '"에 새 지원이 도착했어요.'
+  );
+
+  return new;
+end;
+$$;
+
+create or replace function public.notify_application_status_change()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  target_email text;
+  target_user_id uuid;
+  mission_title text;
+  subject text;
+  body text;
+begin
+  if new.status = old.status then
+    return new;
+  end if;
+
+  if new.type = 'quest' then
+    select title into mission_title from public.quests where id = new.quest_id;
+  else
+    select team_name into mission_title from public.alliances where id = new.alliance_id;
+  end if;
+
+  if new.status = 'accepted' then
+    target_user_id := new.applicant_id;
+    subject := 'gotchi: 지원이 수락됐어요';
+    body := '"' || coalesce(mission_title, '') || '" 지원이 수락됐어요. Workspace에서 진행해주세요.';
+  elsif new.status = 'submitted' then
+    target_user_id := new.owner_id;
+    subject := 'gotchi: 제출물이 도착했어요';
+    body := '"' || coalesce(mission_title, '') || '" 제출물을 확인해주세요.';
+  elsif new.status = 'closed' then
+    perform public.send_email(
+      (select email from auth.users where id = new.applicant_id),
+      'gotchi: 미션이 종료됐어요',
+      '<p>"' || coalesce(mission_title, '') || '"가 종료됐어요. 리뷰를 남겨주세요.</p>'
+    );
+    perform public.create_notification(
+      new.applicant_id, new.id, '미션이 종료됐어요',
+      '"' || coalesce(mission_title, '') || '"가 종료됐어요. 리뷰를 남겨주세요.'
+    );
+    target_user_id := new.owner_id;
+    subject := 'gotchi: 미션이 종료됐어요';
+    body := '"' || coalesce(mission_title, '') || '"가 종료됐어요. 리뷰를 남겨주세요.';
+  elsif new.status = 'rejected' then
+    target_user_id := new.applicant_id;
+    subject := 'gotchi: 지원 결과 안내';
+    body := '"' || coalesce(mission_title, '') || '" 지원이 아쉽게 거절됐어요.';
+  elsif new.status = 'expired' then
+    target_user_id := new.applicant_id;
+    subject := 'gotchi: 지원이 자동 만료됐어요';
+    body := '"' || coalesce(mission_title, '') || '" 지원에 48시간 동안 응답이 없어 자동 만료됐어요.';
+  else
+    return new;
+  end if;
+
+  select email into target_email from auth.users where id = target_user_id;
+  perform public.send_email(target_email, subject, '<p>' || body || '</p>');
+  perform public.create_notification(target_user_id, new.id, subject, body);
+
+  return new;
+end;
+$$;
+
+create or replace function public.notify_new_message()
+returns trigger
+language plpgsql
+security definer
+as $$
+declare
+  recipient_id uuid;
+  recipient_email text;
+begin
+  select case when new.sender_id = a.applicant_id then a.owner_id else a.applicant_id end
+  into recipient_id
+  from public.applications a where a.id = new.application_id;
+
+  select email into recipient_email from auth.users where id = recipient_id;
+
+  perform public.send_email(
+    recipient_email,
+    'gotchi: 새 메시지가 도착했어요',
+    '<p>워크스페이스에 새 메시지가 도착했어요: "' || left(new.body, 80) || '"</p>'
+  );
+
+  perform public.create_notification(
+    recipient_id,
+    new.application_id,
+    '새 메시지가 도착했어요',
+    left(new.body, 80)
+  );
+
+  return new;
+end;
+$$;

@@ -12,6 +12,8 @@ import MultiSelectChips from "./components/MultiSelectChips";
 import EditProfileModal from "./components/EditProfileModal";
 import Footer from "./components/Footer";
 import AdminSection from "./components/AdminSection";
+import Avatar from "./components/Avatar";
+import NotificationBell from "./components/NotificationBell";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
@@ -86,6 +88,7 @@ function App() {
   const [allianceForm, setAllianceForm] = useState(emptyAllianceForm);
   const [applications, setApplications] = useState([]);
   const [adminApplications, setAdminApplications] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [detailTarget, setDetailTarget] = useState(null); // { item, type }
   const [applyTarget, setApplyTarget] = useState(null); // { item, type }
@@ -132,12 +135,33 @@ function App() {
       setProfile(null);
       setApplications([]);
       setReviews([]);
+      setNotifications([]);
       return;
     }
 
     loadProfile(currentUser.id);
     loadApplications(currentUser.id);
     loadReviews(currentUser.id);
+    loadNotifications(currentUser.id);
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser || !isSupabaseConfigured) return;
+
+    const channel = supabase
+      .channel(`notifications-${currentUser.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${currentUser.id}` },
+        (payload) => {
+          setNotifications((prev) => [payload.new, ...prev]);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentUser]);
 
   const didResolveDeepLink = useRef(false);
@@ -203,10 +227,10 @@ function App() {
     }
   };
 
-  const updateProfile = async (displayName, role) => {
+  const updateProfile = async (displayName, role, avatarUrl) => {
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: displayName, role })
+      .update({ display_name: displayName, role, avatar_url: avatarUrl || "" })
       .eq("id", currentUser.id);
 
     if (error) {
@@ -371,6 +395,50 @@ function App() {
     if (!error) {
       setReviews(data ?? []);
     }
+  };
+
+  const loadNotifications = async (userId) => {
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (!error) {
+      setNotifications(data ?? []);
+    }
+  };
+
+  const openNotification = async (notif) => {
+    if (!notif.is_read) {
+      await supabase.from("notifications").update({ is_read: true }).eq("id", notif.id);
+      setNotifications((prev) => prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n)));
+    }
+
+    if (notif.application_id) {
+      const { data } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("id", notif.application_id)
+        .single();
+      if (data) {
+        setActiveTab("workspace");
+        await openWorkspace(data);
+      }
+    }
+  };
+
+  const deleteAccount = async () => {
+    const { error } = await supabase.rpc("delete_own_account");
+    if (error) {
+      setStatusMessage(friendlyError(error.message));
+      return;
+    }
+
+    setIsEditProfileOpen(false);
+    await supabase.auth.signOut();
+    setStatusMessage("계정이 삭제됐어요. 그동안 이용해주셔서 감사합니다.");
   };
 
   const titleForApplication = (app) => {
@@ -785,18 +853,22 @@ function App() {
             </button>
 
             {currentUser ? (
-              <div className="glass-pill flex items-center gap-2 rounded-full px-3 py-2">
-                <span className="text-sm font-bold text-slate-700">
-                  {profile?.display_name || currentUser.email}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="text-xs font-black text-slate-400 hover:text-slate-900"
-                >
-                  로그아웃
-                </button>
-              </div>
+              <>
+                <NotificationBell notifications={notifications} onOpenNotification={openNotification} />
+                <div className="glass-pill flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3">
+                  <Avatar avatarUrl={profile?.avatar_url} name={profile?.display_name || currentUser.email} size={28} />
+                  <span className="text-sm font-bold text-slate-700">
+                    {profile?.display_name || currentUser.email}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="text-xs font-black text-slate-400 hover:text-slate-900"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              </>
             ) : (
               <button
                 type="button"
@@ -884,9 +956,11 @@ function App() {
 
       {isEditProfileOpen && (
         <EditProfileModal
+          user={currentUser}
           profile={profile}
           onSubmit={updateProfile}
           onClose={() => setIsEditProfileOpen(false)}
+          onDeleteAccount={deleteAccount}
         />
       )}
 
