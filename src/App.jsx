@@ -795,26 +795,52 @@ function App() {
     <div className="min-h-screen text-slate-950">
       <header className="sticky top-3 z-40 px-3 sm:top-4 sm:px-4">
         <nav className="glass-strong mx-auto flex max-w-7xl flex-col gap-3 rounded-[28px] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <button
-            type="button"
-            onClick={() => setActiveTab("home")}
-            className="flex items-center gap-3"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-lg font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.35)_inset]">
-              g
-            </div>
-            <div className="text-left">
-              <p className="text-base font-black tracking-tight text-slate-950">
-                gotchi
-              </p>
-              <p className="hidden text-xs font-medium text-slate-500 sm:block">
-                먼저 일해보고, 팀이 되는 곳
-              </p>
-            </div>
-          </button>
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab("home")}
+              className="flex items-center gap-3"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-lg font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.35)_inset]">
+                g
+              </div>
+              <div className="text-left">
+                <p className="text-base font-black tracking-tight text-slate-950">
+                  gotchi
+                </p>
+                <p className="hidden text-xs font-medium text-slate-500 sm:block">
+                  먼저 일해보고, 팀이 되는 곳
+                </p>
+              </div>
+            </button>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="glass-pill flex items-center gap-1 rounded-full p-1">
+            <div className="flex shrink-0 items-center gap-2 sm:hidden">
+              {currentUser && (
+                <NotificationBell notifications={notifications} onOpenNotification={openNotification} />
+              )}
+              {currentUser ? (
+                <Avatar
+                  avatarUrl={profile?.avatar_url}
+                  name={profile?.display_name || currentUser.email}
+                  size={36}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("sign-in");
+                    setIsAuthOpen(true);
+                  }}
+                  className="glass-pill rounded-full px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-white/70"
+                >
+                  로그인
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+            <div className="glass-pill flex shrink-0 items-center gap-1 rounded-full p-1">
               {(profile?.is_admin ? [...tabs, { id: "admin", label: "Admin" }] : tabs).map((tab) => {
                 const isActive = activeTab === tab.id;
 
@@ -823,11 +849,11 @@ function App() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative rounded-full px-3 py-2 text-xs font-bold transition-colors duration-300 sm:px-4 sm:text-sm ${
+                    className={`relative shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-colors duration-300 sm:px-4 sm:text-sm ${
                       isActive ? "text-slate-950" : "text-slate-500 hover:text-slate-900"
                     }`}
                   >
-                    <span className="relative z-10">{tab.label}</span>
+                    <span className="relative z-10 whitespace-nowrap">{tab.label}</span>
                     {isActive && (
                       <span className="absolute inset-0 rounded-full bg-white/90 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_6px_16px_-6px_rgba(15,23,42,0.35)] transition-all duration-300" />
                     )}
@@ -839,7 +865,7 @@ function App() {
             <button
               type="button"
               onClick={() => requireAuth("create-quest")}
-              className="rounded-full bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-4 py-2 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_10px_20px_-8px_rgba(255,59,48,0.6)] transition hover:brightness-105 active:scale-[0.97]"
+              className="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-4 py-2 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_10px_20px_-8px_rgba(255,59,48,0.6)] transition hover:brightness-105 active:scale-[0.97]"
             >
               미션 올리기
             </button>
@@ -847,41 +873,57 @@ function App() {
             <button
               type="button"
               onClick={() => requireAuth("create-alliance")}
-              className="rounded-full bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-4 py-2 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_10px_20px_-8px_rgba(10,132,255,0.6)] transition hover:brightness-105 active:scale-[0.97]"
+              className="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-4 py-2 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_10px_20px_-8px_rgba(10,132,255,0.6)] transition hover:brightness-105 active:scale-[0.97]"
             >
               팀 모집 올리기
             </button>
 
-            {currentUser ? (
-              <>
-                <NotificationBell notifications={notifications} onOpenNotification={openNotification} />
-                <div className="glass-pill flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3">
-                  <Avatar avatarUrl={profile?.avatar_url} name={profile?.display_name || currentUser.email} size={28} />
-                  <span className="text-sm font-bold text-slate-700">
-                    {profile?.display_name || currentUser.email}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="text-xs font-black text-slate-400 hover:text-slate-900"
-                  >
-                    로그아웃
-                  </button>
-                </div>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode("sign-in");
-                  setIsAuthOpen(true);
-                }}
-                className="glass-pill rounded-full px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-white/70"
-              >
-                로그인
-              </button>
-            )}
+            <div className="hidden shrink-0 items-center gap-2 sm:flex">
+              {currentUser ? (
+                <>
+                  <NotificationBell notifications={notifications} onOpenNotification={openNotification} />
+                  <div className="glass-pill flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3">
+                    <Avatar
+                      avatarUrl={profile?.avatar_url}
+                      name={profile?.display_name || currentUser.email}
+                      size={28}
+                    />
+                    <span className="text-sm font-bold text-slate-700">
+                      {profile?.display_name || currentUser.email}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="text-xs font-black text-slate-400 hover:text-slate-900"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("sign-in");
+                    setIsAuthOpen(true);
+                  }}
+                  className="glass-pill rounded-full px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-white/70"
+                >
+                  로그인
+                </button>
+              )}
+            </div>
           </div>
+
+          {currentUser && (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="text-left text-xs font-black text-slate-400 hover:text-slate-900 sm:hidden"
+            >
+              {profile?.display_name || currentUser.email} · 로그아웃
+            </button>
+          )}
         </nav>
       </header>
 
