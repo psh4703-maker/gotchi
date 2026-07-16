@@ -37,7 +37,6 @@ const SKILL_OPTIONS = [
 ];
 const REWARD_OPTIONS = [
   "현금 보상",
-  "지분 제공",
   "인터뷰 우선권",
   "협업 평판 피드백",
   "정규직 전환 기회",
@@ -45,7 +44,7 @@ const REWARD_OPTIONS = [
 ];
 const VALUE_OPTIONS = ["빠른 실험", "고객 집착", "투명한 커뮤니케이션", "데이터 기반 의사결정", "실행력", "수평적 문화"];
 const WORK_TYPE_OPTIONS = ["Remote-first", "주 1회 오프라인", "주 2-3회 오프라인", "상근(출근)"];
-const JOIN_PROCESS_OPTIONS = ["바로 정식 합류", "1개월 협업 후 논의", "3개월 협업 후 논의", "팝업 미션 완료 후 논의"];
+const JOIN_PROCESS_OPTIONS = ["바로 장기 합류", "1개월 협업 후 논의", "3개월 협업 후 논의", "단기 협업 미션 완료 후 논의"];
 const MEMBER_TYPE_OPTIONS = ["Full-time", "Part-time", "Advisor"];
 
 function friendlyError(message) {
@@ -511,7 +510,10 @@ function App() {
   const closeWorkspace = () => {
     setWorkspaceApp(null);
     setMessages([]);
+    setAttachmentUrls({});
   };
+
+  const [attachmentUrls, setAttachmentUrls] = useState({});
 
   const loadMessages = async (applicationId) => {
     const { data, error } = await supabase
@@ -522,7 +524,22 @@ function App() {
 
     if (!error) {
       setMessages(data ?? []);
+      await loadAttachmentUrls(data ?? []);
     }
+  };
+
+  const loadAttachmentUrls = async (messageRows) => {
+    const paths = messageRows.filter((m) => m.attachment_path).map((m) => m.attachment_path);
+    if (paths.length === 0) return;
+
+    const entries = await Promise.all(
+      paths.map(async (path) => {
+        const { data } = await supabase.storage.from("attachments").createSignedUrl(path, 60 * 60);
+        return [path, data?.signedUrl];
+      }),
+    );
+
+    setAttachmentUrls((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
   };
 
   const sendMessage = async (body) => {
@@ -531,6 +548,33 @@ function App() {
       application_id: workspaceApp.id,
       sender_id: currentUser.id,
       body,
+    });
+
+    if (error) {
+      setStatusMessage(friendlyError(error.message));
+      return;
+    }
+    await loadMessages(workspaceApp.id);
+  };
+
+  const sendAttachment = async (file) => {
+    if (!workspaceApp || !currentUser) return;
+
+    const path = `${workspaceApp.id}/${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage.from("attachments").upload(path, file);
+
+    if (uploadError) {
+      setStatusMessage(friendlyError(uploadError.message));
+      return;
+    }
+
+    const { error } = await supabase.from("application_messages").insert({
+      application_id: workspaceApp.id,
+      sender_id: currentUser.id,
+      body: "",
+      attachment_path: path,
+      attachment_name: file.name,
+      attachment_type: file.type,
     });
 
     if (error) {
@@ -971,6 +1015,8 @@ function App() {
           application={{ ...workspaceApp, title: titleForApplication(workspaceApp) }}
           currentUser={currentUser}
           messages={messages}
+          attachmentUrls={attachmentUrls}
+          onSendAttachment={sendAttachment}
           myReview={
             currentUser.id === workspaceApp.applicant_id
               ? workspaceApp.applicant_reviewed
@@ -1297,7 +1343,7 @@ function ResetPasswordModal({ onClose, onDone }) {
 
 function CreateQuestSection({ form, setForm, onSubmit, onCancel }) {
   return (
-    <EditorShell title="새 팝업 미션 올리기" eyebrow="Create Popup Mission">
+    <EditorShell title="새 단기 협업 미션 올리기" eyebrow="Create Short-term Mission">
       <form onSubmit={onSubmit} className="space-y-5">
         <TextInput label="미션 제목" value={form.title} onChange={(value) => setForm((prev) => ({ ...prev, title: value }))} />
         <TextareaInput label="해결이 필요한 구체적 미션" value={form.mission} onChange={(value) => setForm((prev) => ({ ...prev, mission: value }))} />
@@ -1344,7 +1390,7 @@ function CreateAllianceSection({ form, setForm, onSubmit, onCancel }) {
   };
 
   return (
-    <EditorShell title="정식 팀 모집글 올리기" eyebrow="Create Build-up Team">
+    <EditorShell title="장기 팀원 모집글 올리기" eyebrow="Create Long-term Team">
       <form onSubmit={onSubmit} className="space-y-5">
         <TextInput label="팀 이름" value={form.teamName} onChange={(value) => setForm((prev) => ({ ...prev, teamName: value }))} />
         <TextareaInput label="팀 비전" value={form.vision} onChange={(value) => setForm((prev) => ({ ...prev, vision: value }))} />
@@ -1356,7 +1402,7 @@ function CreateAllianceSection({ form, setForm, onSubmit, onCancel }) {
           onChange={(roles) => setForm((prev) => ({ ...prev, roles }))}
         />
 
-        <TextInput label="제공 지분 범위" value={form.equity} onChange={(value) => setForm((prev) => ({ ...prev, equity: value }))} placeholder="예: 2% - 6%" />
+        <TextInput label="보상 조건 (현금 우선, 지분은 추후 별도 협의)" value={form.equity} onChange={(value) => setForm((prev) => ({ ...prev, equity: value }))} placeholder="예: 활동비 지급, 세부 조건은 협의 후 결정" />
 
         <MultiSelectChips
           label="팀 가치관"

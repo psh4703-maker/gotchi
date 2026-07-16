@@ -76,7 +76,7 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
           </div>
 
           <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="내가 올린 팝업 미션" value={quests.length} />
+            <StatCard label="내가 올린 단기 협업 미션" value={quests.length} />
             <StatCard label="내가 올린 팀 모집글" value={alliances.length} />
             <StatCard label="완료한 미션" value={closedAll.length} />
             <StatCard label="받은 평판" value={myPublicReviews.length} />
@@ -108,7 +108,7 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
         )}
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <ActivityPanel title="내 팝업 미션" items={quests} type="quest" onDelete={onDeleteQuest} />
+          <ActivityPanel title="내 단기 협업 미션" items={quests} type="quest" onDelete={onDeleteQuest} />
           <ActivityPanel title="내 팀 모집글" items={alliances} type="alliance" onDelete={onDeleteAlliance} />
         </div>
 
@@ -271,7 +271,7 @@ function ActivityPanel({ title, items, type, onDelete }) {
             >
               <div className="flex items-start justify-between gap-3">
                 <p className="text-xs font-black text-[#0a84ff]">
-                  {type === "quest" ? "#팝업미션" : "#팀모집"}
+                  {type === "quest" ? "#단기협업미션" : "#장기팀원모집"}
                 </p>
                 <button
                   type="button"

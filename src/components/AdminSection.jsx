@@ -29,7 +29,7 @@ function AdminSection({ applications, quests, alliances, onResolve }) {
             {disputed.map((app) => (
               <div key={app.id} className="glass rounded-3xl p-6">
                 <p className="text-xs font-black text-slate-400">
-                  {app.type === "quest" ? "#팝업미션" : "#정식합류"}
+                  {app.type === "quest" ? "#단기협업미션" : "#장기팀원모집"}
                 </p>
                 <h2 className="mt-1 text-lg font-black text-slate-950">
                   {titleFor(app, quests, alliances)}

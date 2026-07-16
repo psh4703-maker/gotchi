@@ -38,10 +38,10 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
               Real founder matching
             </p>
             <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-              같이 일하면, 가치가 남습니다.
+              장기 합류 전, 먼저 함께 일해보세요.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-              먼저 일해보고 같이 할 지를 결정하세요. 그 경험을 gotchi에서 제공합니다.
+              같이 일하면, 가치가 남습니다. 단기 협업 미션으로 먼저 손발을 맞춰보고, 확신이 생기면 장기 팀원으로 합류하세요.
             </p>
           </div>
 
@@ -51,7 +51,7 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
               onClick={onCreateQuest}
               className="rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-5 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(255,59,48,0.55)] transition hover:brightness-105 active:scale-[0.98]"
             >
-              팝업 미션 올리기
+              단기 협업 미션 올리기
             </button>
             <button
               type="button"
@@ -67,8 +67,8 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
           <div className="flex flex-wrap gap-2">
             {[
               ["all", "전체 보기"],
-              ["quest", "팝업 미션만 보기"],
-              ["alliance", "빌드업 팀 모집만 보기"],
+              ["quest", "단기 협업 미션만 보기"],
+              ["alliance", "장기 팀원 모집만 보기"],
             ].map(([id, label]) => (
               <button
                 key={id}
@@ -95,7 +95,7 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
         {filteredItems.length === 0 ? (
           <EmptyState
             title="아직 올라온 글이 없습니다"
-            description="첫 팝업 미션이나 팀 모집글을 올려 gotchi를 시작해보세요."
+            description="첫 단기 협업 미션이나 팀 모집글을 올려 gotchi를 시작해보세요."
           />
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -123,7 +123,7 @@ function QuestCard({ quest, onClick }) {
       className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#ff3b30]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(255,59,48,0.35)]"
     >
       <span className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-black text-[#ff3b30]">
-        #팝업미션
+        #단기협업미션
       </span>
       <h2 className="mt-5 text-xl font-black text-slate-950">{quest.title}</h2>
       <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{quest.mission}</p>
@@ -150,7 +150,7 @@ function AllianceCard({ alliance, onClick }) {
       className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#0a84ff]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(10,132,255,0.35)]"
     >
       <span className="rounded-full bg-[#0a84ff]/10 px-3 py-1 text-xs font-black text-[#0a84ff]">
-        #정식합류
+        #장기팀원모집
       </span>
       <h2 className="mt-5 text-xl font-black text-slate-950">
         {alliance.team_name}
@@ -162,7 +162,7 @@ function AllianceCard({ alliance, onClick }) {
           {alliance.roles.join(" · ")}
         </p>
         <p>
-          <strong className="text-slate-950">제공 지분:</strong> {alliance.equity}
+          <strong className="text-slate-950">보상 조건:</strong> {alliance.equity}
         </p>
       </div>
       <TagList tags={alliance.values} />

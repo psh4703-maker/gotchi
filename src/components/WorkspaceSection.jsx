@@ -100,7 +100,7 @@ function WorkspaceList({ title, items, quests, alliances, onOpen, emptyText }) {
             >
               <div>
                 <p className="text-xs font-black text-slate-400">
-                  {app.type === "quest" ? "#팝업미션" : "#정식합류"}
+                  {app.type === "quest" ? "#단기협업미션" : "#장기팀원모집"}
                 </p>
                 <p className="mt-1 text-sm font-bold text-slate-800">
                   {titleFor(app, quests, alliances)}

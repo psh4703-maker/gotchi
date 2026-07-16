@@ -20,7 +20,7 @@ function ApplyModal({ type, item, onSubmit, onClose }) {
     <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-950/40 px-4 py-8 backdrop-blur-md">
       <div className="glass-strong w-full max-w-lg rounded-[32px] p-6 sm:p-8">
         <p className="text-sm font-black text-slate-400">
-          {isQuest ? "#팝업미션" : "#정식합류"}
+          {isQuest ? "#단기협업미션" : "#장기팀원모집"}
         </p>
         <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
           {isQuest ? item.title : item.team_name}
@@ -47,7 +47,7 @@ function ApplyModal({ type, item, onSubmit, onClose }) {
             onClick={submit}
             className={`flex-1 rounded-2xl bg-gradient-to-b ${grad} px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset] ${ring} transition hover:brightness-105 disabled:opacity-50`}
           >
-            {isSubmitting ? "지원 중..." : isQuest ? "미션 지원하기" : "정식 멤버 지원하기"}
+            {isSubmitting ? "지원 중..." : isQuest ? "미션 지원하기" : "장기 팀원으로 지원하기"}
           </button>
           <button
             type="button"

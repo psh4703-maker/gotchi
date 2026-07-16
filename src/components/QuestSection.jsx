@@ -15,7 +15,7 @@ function QuestSection({ quests, onCreateQuest, onSelectQuest }) {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col justify-between gap-5 pb-8 lg:flex-row lg:items-end">
           <div>
-            <p className="mb-3 text-sm font-black text-[#ff3b30]">Popup Mission</p>
+            <p className="mb-3 text-sm font-black text-[#ff3b30]">Short-term Mission</p>
             <h1 className="text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
               실제 등록된 단기 미션
             </h1>
@@ -46,7 +46,7 @@ function QuestSection({ quests, onCreateQuest, onSelectQuest }) {
               {quests.length === 0 ? "아직 등록된 미션이 없습니다" : "검색 결과가 없습니다"}
             </h2>
             <p className="mt-3 text-sm text-slate-500">
-              {quests.length === 0 ? "로그인 후 첫 팝업 미션을 올려보세요." : "다른 키워드로 검색해보세요."}
+              {quests.length === 0 ? "로그인 후 첫 단기 협업 미션을 올려보세요." : "다른 키워드로 검색해보세요."}
             </p>
           </div>
         ) : (
@@ -61,7 +61,7 @@ function QuestSection({ quests, onCreateQuest, onSelectQuest }) {
                 className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#ff3b30]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(255,59,48,0.35)]"
               >
                 <span className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-black text-[#ff3b30]">
-                  #팝업미션
+                  #단기협업미션
                 </span>
                 <h2 className="mt-5 text-xl font-black text-slate-950">
                   {quest.title}

@@ -15,7 +15,7 @@ function DetailModal({ type, item, currentUser, myApplication, relatedQuest, onA
         <div className="flex items-start justify-between gap-4">
           <div>
             <span className={`rounded-full ${accent.chip} px-3 py-1 text-xs font-black ${accent.text}`}>
-              {isQuest ? "#팝업미션" : "#정식합류"}
+              {isQuest ? "#단기협업미션" : "#장기팀원모집"}
             </span>
             <h1 className="mt-4 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
               {isQuest ? item.title : item.team_name}
@@ -56,7 +56,7 @@ function DetailModal({ type, item, currentUser, myApplication, relatedQuest, onA
           ) : (
             <>
               <InfoRow label="모집 직군" value={item.roles.join(" · ")} />
-              <InfoRow label="제공 지분 범위" value={item.equity} />
+              <InfoRow label="보상 조건" value={item.equity} />
             </>
           )}
         </div>
@@ -114,7 +114,7 @@ function DetailModal({ type, item, currentUser, myApplication, relatedQuest, onA
               onClick={() => onApply(item, type)}
               className={`w-full rounded-2xl bg-gradient-to-b ${accent.grad} px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset] ${accent.ring} transition hover:brightness-105`}
             >
-              {isQuest ? "미션 지원하기" : "정식 멤버 지원하기"}
+              {isQuest ? "미션 지원하기" : "장기 팀원으로 지원하기"}
             </button>
           )}
         </div>
@@ -125,8 +125,8 @@ function DetailModal({ type, item, currentUser, myApplication, relatedQuest, onA
             onClick={() => onSelectQuest(relatedQuest)}
             className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#3aa0ff] to-[#0a84ff] p-5 text-left text-white shadow-[0_14px_24px_-10px_rgba(10,132,255,0.5)] transition hover:brightness-105"
           >
-            <p className="text-xs font-bold text-blue-100">아직 정식 합류가 고민된다면</p>
-            <p className="mt-1 text-base font-black">이 팀과 팝업 미션으로 먼저 일해보며 핏 확인하기</p>
+            <p className="text-xs font-bold text-blue-100">아직 장기 합류가 고민된다면</p>
+            <p className="mt-1 text-base font-black">이 팀과 단기 협업 미션으로 먼저 일해보며 핏 확인하기</p>
             <p className="mt-2 text-sm text-blue-100">
               "{relatedQuest.title}" 미션으로 서로의 속도, 커뮤니케이션, 문제 해결 방식을 가볍게 확인해보세요.
             </p>

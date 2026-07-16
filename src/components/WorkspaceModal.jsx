@@ -20,8 +20,10 @@ function WorkspaceModal({
   application,
   currentUser,
   messages,
+  attachmentUrls,
   myReview,
   onSendMessage,
+  onSendAttachment,
   onAccept,
   onReject,
   onSubmitWork,
@@ -38,6 +40,7 @@ function WorkspaceModal({
   const [draft, setDraft] = useState("");
   const [submissionText, setSubmissionText] = useState(application.submission_note || "");
   const [paymentNote, setPaymentNote] = useState(application.payment_note || "");
+  const [isUploading, setIsUploading] = useState(false);
 
   const isOwner = currentUser.id === application.owner_id;
   const isApplicant = currentUser.id === application.applicant_id;
@@ -48,13 +51,22 @@ function WorkspaceModal({
     setDraft("");
   };
 
+  const handleFilePick = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setIsUploading(true);
+    await onSendAttachment(file);
+    setIsUploading(false);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8 backdrop-blur-md">
       <div className="glass-strong flex h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] sm:h-[85vh] sm:rounded-[32px]">
         <div className="flex items-start justify-between gap-4 border-b border-white/60 px-6 py-5 sm:px-8">
           <div>
             <p className="text-xs font-black text-slate-400">
-              {application.type === "quest" ? "#팝업미션" : "#정식합류"}
+              {application.type === "quest" ? "#단기협업미션" : "#장기팀원모집"}
             </p>
             <h1 className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
               {application.title}
@@ -152,6 +164,7 @@ function WorkspaceModal({
                 ) : (
                   messages.map((message) => {
                     const isMine = message.sender_id === currentUser.id;
+                    const isImage = message.attachment_type?.startsWith("image/");
                     return (
                       <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                         <div
@@ -161,7 +174,35 @@ function WorkspaceModal({
                               : "glass-pill text-slate-700"
                           }`}
                         >
-                          {message.body}
+                          {message.attachment_path && (
+                            <div className="mb-1">
+                              {isImage ? (
+                                attachmentUrls[message.attachment_path] ? (
+                                  <a href={attachmentUrls[message.attachment_path]} target="_blank" rel="noreferrer">
+                                    <img
+                                      src={attachmentUrls[message.attachment_path]}
+                                      alt={message.attachment_name}
+                                      className="max-h-56 rounded-xl object-cover"
+                                    />
+                                  </a>
+                                ) : (
+                                  <p className="text-xs opacity-70">이미지 불러오는 중...</p>
+                                )
+                              ) : (
+                                <a
+                                  href={attachmentUrls[message.attachment_path]}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className={`flex items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-bold underline ${
+                                    isMine ? "text-white" : "text-[#0a84ff]"
+                                  }`}
+                                >
+                                  📎 {message.attachment_name}
+                                </a>
+                              )}
+                            </div>
+                          )}
+                          {message.body && <span>{message.body}</span>}
                         </div>
                       </div>
                     );
@@ -169,6 +210,10 @@ function WorkspaceModal({
                 )}
               </div>
               <div className="mt-2 flex gap-2 border-t border-white/60 pt-3">
+                <label className="glass-pill flex shrink-0 cursor-pointer items-center justify-center rounded-2xl px-3 py-3 text-lg hover:bg-white/70">
+                  {isUploading ? "..." : "📎"}
+                  <input type="file" onChange={handleFilePick} disabled={isUploading} className="hidden" />
+                </label>
                 <input
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
