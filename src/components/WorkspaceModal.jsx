@@ -33,6 +33,8 @@ function WorkspaceModal({
   onConfirmPayment,
   onClose,
   onOpenReview,
+  pairHistory,
+  onRehire,
 }) {
   const [tab, setTab] = useState(
     ["accepted", "submitted", "disputed"].includes(application.status) ? "chat" : "brief",
@@ -102,6 +104,12 @@ function WorkspaceModal({
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5 sm:px-8">
           {tab === "brief" && (
             <div className="space-y-5">
+              {pairHistory?.length > 0 && (
+                <div className="rounded-2xl bg-[#0a84ff]/10 px-4 py-3 text-sm font-bold text-[#0a84ff]">
+                  🤝 이 사람과 벌써 {pairHistory.length}번째 협업이에요
+                </div>
+              )}
+
               {application.note && (
                 <div className="glass-pill rounded-2xl p-4">
                   <p className="text-xs font-black text-slate-400">지원 메시지</p>
@@ -354,6 +362,28 @@ function WorkspaceModal({
                   >
                     {myReview ? "리뷰 완료" : "리뷰 남기기"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={onRehire}
+                    className="mt-3 w-full rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(10,132,255,0.5)] transition hover:brightness-105"
+                  >
+                    이 사람과 다음 미션 시작하기
+                  </button>
+
+                  {pairHistory?.length > 0 && (
+                    <div className="mt-4 border-t border-white/60 pt-4">
+                      <p className="text-xs font-black text-slate-400">
+                        이 사람과 함께한 미션 {pairHistory.length}건
+                      </p>
+                      <div className="mt-2 space-y-1">
+                        {pairHistory.map((past) => (
+                          <p key={past.id} className="text-xs text-slate-500">
+                            · {past.title}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

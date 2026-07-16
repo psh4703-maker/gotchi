@@ -14,6 +14,7 @@ import Footer from "./components/Footer";
 import AdminSection from "./components/AdminSection";
 import Avatar from "./components/Avatar";
 import NotificationBell from "./components/NotificationBell";
+import RehireModal from "./components/RehireModal";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
@@ -500,17 +501,91 @@ function App() {
     setApplyTarget({ item, type });
   };
 
+  const [pairHistory, setPairHistory] = useState([]);
+  const [rehireTarget, setRehireTarget] = useState(null);
+
   const openWorkspace = async (application) => {
     setDetailTarget(null);
     setApplyTarget(null);
     setWorkspaceApp(application);
     await loadMessages(application.id);
+    await loadPairHistory(application);
   };
 
   const closeWorkspace = () => {
     setWorkspaceApp(null);
     setMessages([]);
     setAttachmentUrls({});
+    setPairHistory([]);
+  };
+
+  const loadPairHistory = async (application) => {
+    if (!currentUser) return;
+    const counterpartId =
+      currentUser.id === application.applicant_id ? application.owner_id : application.applicant_id;
+
+    const { data, error } = await supabase
+      .from("applications")
+      .select("*")
+      .eq("status", "closed")
+      .or(
+        `and(applicant_id.eq.${currentUser.id},owner_id.eq.${counterpartId}),and(applicant_id.eq.${counterpartId},owner_id.eq.${currentUser.id})`,
+      )
+      .order("updated_at", { ascending: false });
+
+    if (!error) {
+      setPairHistory(data ?? []);
+    }
+  };
+
+  const rehireCollaborator = async (fields) => {
+    if (!rehireTarget || !currentUser) return;
+
+    const collaboratorId =
+      currentUser.id === rehireTarget.applicant_id ? rehireTarget.owner_id : rehireTarget.applicant_id;
+
+    const { data: newQuest, error: questError } = await supabase
+      .from("quests")
+      .insert({
+        owner_id: currentUser.id,
+        title: fields.title,
+        mission: fields.mission,
+        period: fields.period,
+        reward: fields.reward,
+        skills: [],
+      })
+      .select()
+      .single();
+
+    if (questError) {
+      setStatusMessage(friendlyError(questError.message));
+      return;
+    }
+
+    const { data: newApplication, error: appError } = await supabase
+      .from("applications")
+      .insert({
+        type: "quest",
+        quest_id: newQuest.id,
+        applicant_id: collaboratorId,
+        owner_id: currentUser.id,
+        note: "이전에 함께 일했던 사이라 재계약으로 바로 시작돼요.",
+        status: "accepted",
+      })
+      .select()
+      .single();
+
+    if (appError) {
+      setStatusMessage(friendlyError(appError.message));
+      return;
+    }
+
+    setRehireTarget(null);
+    setStatusMessage("새 미션이 시작됐어요. 워크스페이스에서 바로 진행하세요.");
+    await loadPublicData();
+    await loadApplications(currentUser.id);
+    setActiveTab("workspace");
+    await openWorkspace(newApplication);
   };
 
   const [attachmentUrls, setAttachmentUrls] = useState({});
@@ -1032,7 +1107,15 @@ function App() {
           onConfirmPayment={(confirmed) => confirmPayment(workspaceApp, confirmed)}
           onClose={closeWorkspace}
           onOpenReview={() => setReviewApp(workspaceApp)}
+          pairHistory={pairHistory
+            .filter((app) => app.id !== workspaceApp.id)
+            .map((app) => ({ ...app, title: titleForApplication(app) }))}
+          onRehire={() => setRehireTarget(workspaceApp)}
         />
+      )}
+
+      {rehireTarget && (
+        <RehireModal onSubmit={rehireCollaborator} onClose={() => setRehireTarget(null)} />
       )}
 
       {reviewApp && (
