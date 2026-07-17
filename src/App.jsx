@@ -502,6 +502,7 @@ function App() {
   };
 
   const [pairHistory, setPairHistory] = useState([]);
+  const [counterpartStats, setCounterpartStats] = useState(null);
   const [rehireTarget, setRehireTarget] = useState(null);
 
   const openWorkspace = async (application) => {
@@ -510,6 +511,21 @@ function App() {
     setWorkspaceApp(application);
     await loadMessages(application.id);
     await loadPairHistory(application);
+    await loadCounterpartStats(application);
+  };
+
+  const loadCounterpartStats = async (application) => {
+    if (!currentUser) return;
+    const counterpartId =
+      currentUser.id === application.applicant_id ? application.owner_id : application.applicant_id;
+
+    const { data, error } = await supabase
+      .rpc("get_user_trust_stats", { target_user_id: counterpartId })
+      .single();
+
+    if (!error) {
+      setCounterpartStats(data);
+    }
   };
 
   const closeWorkspace = () => {
@@ -517,6 +533,7 @@ function App() {
     setMessages([]);
     setAttachmentUrls({});
     setPairHistory([]);
+    setCounterpartStats(null);
   };
 
   const loadPairHistory = async (application) => {
@@ -1110,6 +1127,7 @@ function App() {
           pairHistory={pairHistory
             .filter((app) => app.id !== workspaceApp.id)
             .map((app) => ({ ...app, title: titleForApplication(app) }))}
+          counterpartStats={counterpartStats}
           onRehire={() => setRehireTarget(workspaceApp)}
         />
       )}

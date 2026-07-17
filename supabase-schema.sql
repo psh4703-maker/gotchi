@@ -746,3 +746,75 @@ begin
   return new;
 end;
 $$;
+
+-- ============================================================
+-- 채팅 사진/파일 첨부: 비공개 버킷 + 매칭 참여자만 업로드/열람 가능
+-- ============================================================
+
+alter table public.application_messages add column if not exists attachment_path text;
+alter table public.application_messages add column if not exists attachment_name text;
+alter table public.application_messages add column if not exists attachment_type text;
+alter table public.application_messages alter column body drop not null;
+alter table public.application_messages alter column body set default '';
+
+insert into storage.buckets (id, name, public)
+values ('attachments', 'attachments', false)
+on conflict (id) do nothing;
+
+drop policy if exists "Participants can upload attachments" on storage.objects;
+create policy "Participants can upload attachments"
+on storage.objects for insert
+with check (
+  bucket_id = 'attachments'
+  and exists (
+    select 1 from public.applications a
+    where a.id::text = (storage.foldername(name))[1]
+      and (a.applicant_id = auth.uid() or a.owner_id = auth.uid())
+  )
+);
+
+drop policy if exists "Participants can read attachments" on storage.objects;
+create policy "Participants can read attachments"
+on storage.objects for select
+using (
+  bucket_id = 'attachments'
+  and exists (
+    select 1 from public.applications a
+    where a.id::text = (storage.foldername(name))[1]
+      and (a.applicant_id = auth.uid() or a.owner_id = auth.uid())
+  )
+);
+
+-- ============================================================
+-- 상대방의 신뢰 지표를 매칭 상대에게도 공개: 완료 미션 수 + 리뷰 작성률.
+-- RLS를 우회하지 않고, 집계된 숫자만 안전하게 반환하는 함수.
+-- ============================================================
+
+create or replace function public.get_user_trust_stats(target_user_id uuid)
+returns table (
+  completed_missions int,
+  review_completion_rate int,
+  public_review_count int
+)
+language sql
+stable
+security definer
+as $$
+  with closed as (
+    select
+      id,
+      case when applicant_id = target_user_id then applicant_reviewed else owner_reviewed end as did_review
+    from public.applications
+    where status = 'closed'
+      and (applicant_id = target_user_id or owner_id = target_user_id)
+  )
+  select
+    count(*)::int as completed_missions,
+    case when count(*) = 0 then 0
+      else round(100.0 * sum(case when did_review then 1 else 0 end) / count(*))::int
+    end as review_completion_rate,
+    (select count(*) from public.reviews where reviewee_id = target_user_id and is_public = true)::int as public_review_count
+  from closed;
+$$;
+
+grant execute on function public.get_user_trust_stats(uuid) to authenticated;

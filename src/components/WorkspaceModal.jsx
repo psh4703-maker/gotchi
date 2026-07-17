@@ -34,6 +34,7 @@ function WorkspaceModal({
   onClose,
   onOpenReview,
   pairHistory,
+  counterpartStats,
   onRehire,
 }) {
   const [tab, setTab] = useState(
@@ -104,6 +105,23 @@ function WorkspaceModal({
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-5 sm:px-8">
           {tab === "brief" && (
             <div className="space-y-5">
+              {counterpartStats && counterpartStats.completed_missions > 0 && (
+                <div className="glass-pill grid grid-cols-3 gap-2 rounded-2xl p-4 text-center">
+                  <div>
+                    <p className="text-lg font-black text-slate-950">{counterpartStats.completed_missions}</p>
+                    <p className="text-[10px] font-bold text-slate-400">완료 미션</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-slate-950">{counterpartStats.review_completion_rate}%</p>
+                    <p className="text-[10px] font-bold text-slate-400">리뷰 작성률</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-slate-950">{counterpartStats.public_review_count}</p>
+                    <p className="text-[10px] font-bold text-slate-400">받은 리뷰</p>
+                  </div>
+                </div>
+              )}
+
               {pairHistory?.length > 0 && (
                 <div className="rounded-2xl bg-[#0a84ff]/10 px-4 py-3 text-sm font-bold text-[#0a84ff]">
                   🤝 이 사람과 벌써 {pairHistory.length}번째 협업이에요

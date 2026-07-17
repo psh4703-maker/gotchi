@@ -43,6 +43,11 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
       )
     : 0;
 
+  const reviewedCount = closedAll.filter((app) =>
+    app.applicant_id === user.id ? app.applicant_reviewed : app.owner_reviewed,
+  ).length;
+  const myReviewCompletionRate = closedAll.length ? Math.round((reviewedCount / closedAll.length) * 100) : 0;
+
   const trust = computeTrustScore(closedAll, myPublicReviews);
 
   return (
@@ -75,11 +80,12 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
             <TrustScoreRing score={trust.score} isRookie={trust.isRookie} />
           </div>
 
-          <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
             <StatCard label="내가 올린 단기 협업 미션" value={quests.length} />
             <StatCard label="내가 올린 팀 모집글" value={alliances.length} />
             <StatCard label="완료한 미션" value={closedAll.length} />
             <StatCard label="받은 평판" value={myPublicReviews.length} />
+            <StatCard label="리뷰 작성률" value={`${myReviewCompletionRate}%`} />
           </div>
         </div>
 
