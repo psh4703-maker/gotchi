@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSelectQuest, onSelectAlliance }) {
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const feedItems = useMemo(() => {
     const questItems = quests.map((quest) => ({ ...quest, type: "quest" }));
@@ -29,23 +30,28 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
       return haystack.join(" ").toLowerCase().includes(normalizedQuery);
     });
 
-  return (
-    <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-          <div>
-            <p className="mb-3 text-sm font-bold text-[#0a84ff]">
-              Real founder matching
-            </p>
-            <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-              장기 합류 전, 먼저 함께 일해보세요.
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-              같이 일하면, 가치가 남습니다. 단기 협업 미션으로 먼저 손발을 맞춰보고, 확신이 생기면 장기 팀원으로 합류하세요.
-            </p>
-          </div>
+  const visibleItems = filteredItems.slice(0, visibleCount);
+  const hasMore = filteredItems.length > visibleCount;
 
-          <div className="flex flex-col gap-3 sm:flex-row">
+  return (
+    <section className="relative min-h-screen px-5 py-10 sm:px-6 lg:px-8">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(10,132,255,0.16),rgba(255,59,48,0.08)_45%,transparent_75%)]"
+      />
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-10 flex flex-col items-center text-center">
+          <p className="mb-3 text-sm font-bold text-[#0a84ff]">
+            Real founder matching
+          </p>
+          <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
+            먼저 일해보고, 나중에 동행하세요
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+            단기적인 보상으로 시작된 협업이, 끈끈한 결속력이 되는 경험을 gotchi가 제공합니다
+          </p>
+
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={onCreateQuest}
@@ -63,7 +69,9 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
           </div>
         </div>
 
-        <div className="glass mb-6 flex flex-col gap-3 rounded-2xl p-2 sm:flex-row sm:items-center">
+        <div
+          className="glass mb-6 flex flex-col gap-3 rounded-2xl p-2 sm:flex-row sm:items-center"
+        >
           <div className="flex flex-wrap gap-2">
             {[
               ["all", "전체 보기"],
@@ -73,7 +81,10 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
               <button
                 key={id}
                 type="button"
-                onClick={() => setFilter(id)}
+                onClick={() => {
+                  setFilter(id);
+                  setVisibleCount(6);
+                }}
                 className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
                   filter === id
                     ? "bg-slate-950 text-white shadow-[0_10px_18px_-8px_rgba(15,23,42,0.5)]"
@@ -86,7 +97,10 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
           </div>
           <input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setVisibleCount(6);
+            }}
             placeholder="제목, 내용, 역량으로 검색"
             className="glass-pill w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15 sm:ml-auto sm:w-64"
           />
@@ -98,15 +112,28 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
             description="첫 단기 협업 미션이나 팀 모집글을 올려 gotchi를 시작해보세요."
           />
         ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {filteredItems.map((item) =>
-              item.type === "quest" ? (
-                <QuestCard key={item.id} quest={item} onClick={() => onSelectQuest?.(item)} />
-              ) : (
-                <AllianceCard key={item.id} alliance={item} onClick={() => onSelectAlliance?.(item)} />
-              ),
+          <>
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {visibleItems.map((item) =>
+                item.type === "quest" ? (
+                  <QuestCard key={item.id} quest={item} onClick={() => onSelectQuest?.(item)} />
+                ) : (
+                  <AllianceCard key={item.id} alliance={item} onClick={() => onSelectAlliance?.(item)} />
+                ),
+              )}
+            </div>
+            {hasMore && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((prev) => prev + 6)}
+                  className="glass-pill rounded-full px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-white/70"
+                >
+                  더보기
+                </button>
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </section>

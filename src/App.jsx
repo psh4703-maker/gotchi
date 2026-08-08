@@ -25,6 +25,8 @@ const tabs = [
   { id: "portfolio", label: "My Portfolio" },
 ];
 
+const PRIMARY_TAB_IDS = ["home", "workspace", "portfolio"];
+
 const ROLE_OPTIONS = ["경영", "기획/전략", "재무/회계", "디자인", "개발", "마케팅", "세일즈", "운영"];
 const SKILL_OPTIONS = [
   "기획력",
@@ -80,6 +82,7 @@ function App() {
   const [quests, setQuests] = useState([]);
   const [alliances, setAlliances] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [authMode, setAuthMode] = useState("sign-in");
@@ -833,6 +836,10 @@ function App() {
     await loadReviews(currentUser.id);
   };
 
+  const allTabs = profile?.is_admin ? [...tabs, { id: "admin", label: "Admin" }] : tabs;
+  const primaryTabs = allTabs.filter((tab) => PRIMARY_TAB_IDS.includes(tab.id));
+  const moreTabs = allTabs.filter((tab) => !PRIMARY_TAB_IDS.includes(tab.id));
+
   const renderSection = () => {
     switch (activeTab) {
       case "home":
@@ -976,26 +983,62 @@ function App() {
           </div>
 
           <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-            <div className="glass-pill flex shrink-0 items-center gap-1 rounded-full p-1">
-              {(profile?.is_admin ? [...tabs, { id: "admin", label: "Admin" }] : tabs).map((tab) => {
+            <div className="flex shrink-0 items-center gap-1">
+              {primaryTabs.map((tab, index) => {
                 const isActive = activeTab === tab.id;
 
                 return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`relative shrink-0 rounded-full px-3 py-2 text-xs font-bold transition-colors duration-300 sm:px-4 sm:text-sm ${
-                      isActive ? "text-slate-950" : "text-slate-500 hover:text-slate-900"
-                    }`}
-                  >
-                    <span className="relative z-10 whitespace-nowrap">{tab.label}</span>
-                    {isActive && (
-                      <span className="absolute inset-0 rounded-full bg-white/90 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_6px_16px_-6px_rgba(15,23,42,0.35)] transition-all duration-300" />
-                    )}
-                  </button>
+                  <span key={tab.id} className="flex shrink-0 items-center">
+                    {index > 0 && <span className="mx-2 text-xs font-medium text-slate-300">|</span>}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`shrink-0 whitespace-nowrap px-1 text-xs font-black uppercase tracking-wide transition-colors sm:text-sm ${
+                        isActive ? "text-slate-950" : "text-slate-400 hover:text-slate-700"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  </span>
                 );
               })}
+
+              <span className="mx-2 text-xs font-medium text-slate-300">|</span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+                  className={`flex shrink-0 items-center gap-1 whitespace-nowrap px-1 text-xs font-black uppercase tracking-wide transition-colors sm:text-sm ${
+                    moreTabs.some((tab) => tab.id === activeTab) ? "text-slate-950" : "text-slate-400 hover:text-slate-700"
+                  }`}
+                >
+                  더보기
+                  <span className="text-[10px]">{isMoreMenuOpen ? "▲" : "▼"}</span>
+                </button>
+
+                {isMoreMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setIsMoreMenuOpen(false)} />
+                    <div className="glass-strong absolute left-0 z-40 mt-3 w-44 overflow-hidden rounded-2xl p-1.5">
+                      {moreTabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(tab.id);
+                            setIsMoreMenuOpen(false);
+                          }}
+                          className={`block w-full rounded-xl px-3 py-2 text-left text-sm font-bold transition ${
+                            activeTab === tab.id ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-white/70"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <button
