@@ -19,11 +19,7 @@ function HomeSection({ quests, onCreateQuest, onSelectQuest }) {
   const hasMore = filteredQuests.length > visibleCount;
 
   return (
-    <section className="relative min-h-screen px-5 py-10 sm:px-6 lg:px-8">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(10,132,255,0.16),rgba(255,59,48,0.08)_45%,transparent_75%)]"
-      />
+    <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 flex flex-col items-center text-center">
           <p className="mb-3 text-sm font-bold text-[#1B1F4D]">

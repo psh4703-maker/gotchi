@@ -848,8 +848,8 @@ function App() {
 
   return (
     <div className="min-h-screen text-slate-950">
-      <header className="sticky top-3 z-40 px-3 sm:top-4 sm:px-4">
-        <nav className="glass-strong mx-auto flex max-w-7xl flex-col gap-3 rounded-[28px] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <header className="sticky top-0 z-40 border-b border-[#eceef4] bg-white">
+        <nav className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
