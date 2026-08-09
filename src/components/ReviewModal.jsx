@@ -30,7 +30,7 @@ function ReviewModal({ onSubmit, onClose }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 px-4 py-8 backdrop-blur-md">
       <div className="glass-strong w-full max-w-lg rounded-[32px] p-6 sm:p-8">
-        <p className="text-sm font-black text-[#0a84ff]">Mission Closed</p>
+        <p className="text-sm font-black text-[#1B1F4D]">Mission Closed</p>
         <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
           같이 일한 소감을 남겨주세요
         </h1>
@@ -65,7 +65,7 @@ function ReviewModal({ onSubmit, onClose }) {
             value={comment}
             onChange={(event) => setComment(event.target.value)}
             placeholder="함께 일하며 좋았던 점을 짧게 적어주세요"
-            className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
           />
         </label>
 
@@ -76,7 +76,7 @@ function ReviewModal({ onSubmit, onClose }) {
             value={privateNote}
             onChange={(event) => setPrivateNote(event.target.value)}
             placeholder="다시 협업하고 싶지 않은 이유가 있다면 솔직하게 적어주세요"
-            className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
           />
         </label>
 

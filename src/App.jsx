@@ -905,11 +905,14 @@ function App() {
                     <button
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`shrink-0 whitespace-nowrap px-1 text-xs font-black uppercase tracking-wide transition-colors sm:text-sm ${
-                        isActive ? "text-slate-950" : "text-slate-400 hover:text-slate-700"
+                      className={`relative shrink-0 whitespace-nowrap px-1 pb-1 text-xs font-black uppercase tracking-wide transition-colors sm:text-sm ${
+                        isActive ? "text-[#1B1F4D]" : "text-slate-400 hover:text-slate-700"
                       }`}
                     >
                       {tab.label}
+                      {isActive && (
+                        <span className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-[#1B1F4D]" />
+                      )}
                     </button>
                   </span>
                 );
@@ -921,7 +924,7 @@ function App() {
                   type="button"
                   onClick={() => setIsMoreMenuOpen((prev) => !prev)}
                   className={`flex shrink-0 items-center gap-1 whitespace-nowrap px-1 text-xs font-black uppercase tracking-wide transition-colors sm:text-sm ${
-                    moreTabs.some((tab) => tab.id === activeTab) ? "text-slate-950" : "text-slate-400 hover:text-slate-700"
+                    moreTabs.some((tab) => tab.id === activeTab) ? "text-[#1B1F4D]" : "text-slate-400 hover:text-slate-700"
                   }`}
                 >
                   더보기
@@ -956,7 +959,7 @@ function App() {
             <button
               type="button"
               onClick={() => requireAuth("create-quest")}
-              className="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-4 py-2 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_10px_20px_-8px_rgba(255,59,48,0.6)] transition hover:brightness-105 active:scale-[0.97]"
+              className="shrink-0 whitespace-nowrap rounded-full bg-[#1B1F4D] px-4 py-2 text-sm font-black text-white shadow-[0_10px_20px_-8px_rgba(27,31,77,0.5)] transition hover:bg-[#262B63] active:scale-[0.97]"
             >
               미션 올리기
             </button>
@@ -1215,7 +1218,7 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
       <form onSubmit={submit} className="glass-strong w-full max-w-md rounded-[28px] p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-black text-[#0a84ff]">gotchi account</p>
+            <p className="text-sm font-black text-[#1B1F4D]">gotchi account</p>
             <h2 className="mt-2 text-2xl font-black text-slate-950">
               {isForgot ? "비밀번호 찾기" : isSignUp ? "회원가입" : "로그인"}
             </h2>
@@ -1283,7 +1286,7 @@ function AuthModal({ mode, setMode, onClose, onAuthed, onError }) {
         {!resetSent && (
           <button
             disabled={isLoading}
-            className="mt-6 w-full rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.6)] transition hover:brightness-105 disabled:opacity-50"
+            className="mt-6 w-full rounded-2xl bg-[#1B1F4D] px-5 py-4 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63] disabled:opacity-50"
           >
             {isLoading
               ? "처리 중..."
@@ -1351,7 +1354,7 @@ function ResetPasswordModal({ onClose, onDone }) {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-md">
       <form onSubmit={submit} className="glass-strong w-full max-w-md rounded-[28px] p-6">
-        <p className="text-sm font-black text-[#0a84ff]">gotchi account</p>
+        <p className="text-sm font-black text-[#1B1F4D]">gotchi account</p>
         <h2 className="mt-2 text-2xl font-black text-slate-950">새 비밀번호 설정</h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
           새로 사용할 비밀번호를 입력해주세요.
@@ -1364,7 +1367,7 @@ function ResetPasswordModal({ onClose, onDone }) {
 
         <button
           disabled={isLoading}
-          className="mt-6 w-full rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.6)] transition hover:brightness-105 disabled:opacity-50"
+          className="mt-6 w-full rounded-2xl bg-[#1B1F4D] px-5 py-4 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63] disabled:opacity-50"
         >
           {isLoading ? "변경 중..." : "비밀번호 변경하기"}
         </button>
@@ -1517,13 +1520,13 @@ function CreateQuestSection({ form, setForm, onSubmit, onCancel }) {
                     value={memberDraft.name}
                     onChange={(event) => setMemberDraft((prev) => ({ ...prev, name: event.target.value }))}
                     placeholder="이름"
-                    className="glass-pill w-28 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                    className="glass-pill w-28 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
                   />
                   <input
                     value={memberDraft.role}
                     onChange={(event) => setMemberDraft((prev) => ({ ...prev, role: event.target.value }))}
                     placeholder="역할 (예: Founder / Product)"
-                    className="glass-pill flex-1 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                    className="glass-pill flex-1 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
                   />
                   <select
                     value={memberDraft.type}
@@ -1555,7 +1558,7 @@ function EditorShell({ eyebrow, title, children }) {
   return (
     <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
       <div className="glass-strong mx-auto max-w-3xl rounded-[32px] p-6 sm:p-8">
-        <p className="text-sm font-black text-[#0a84ff]">{eyebrow}</p>
+        <p className="text-sm font-black text-[#1B1F4D]">{eyebrow}</p>
         <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">
           {title}
         </h1>
@@ -1578,7 +1581,7 @@ function TextInput({ label, value, onChange, placeholder, type = "text" }) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="glass-pill mt-2 w-full rounded-2xl px-4 py-3 text-sm outline-none transition focus:border-[#0a84ff]/50 focus:ring-4 focus:ring-[#0a84ff]/15"
+        className="glass-pill mt-2 w-full rounded-2xl px-4 py-3 text-sm outline-none transition focus:border-[#1B1F4D]/40 focus:ring-4 focus:ring-[#1B1F4D]/15"
       />
     </label>
   );
@@ -1593,7 +1596,7 @@ function TextareaInput({ label, value, onChange }) {
         rows={5}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none transition focus:border-[#0a84ff]/50 focus:ring-4 focus:ring-[#0a84ff]/15"
+        className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none transition focus:border-[#1B1F4D]/40 focus:ring-4 focus:ring-[#1B1F4D]/15"
       />
     </label>
   );

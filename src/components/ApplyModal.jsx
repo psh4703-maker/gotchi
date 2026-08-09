@@ -18,7 +18,7 @@ function ApplyModal({ item, onSubmit, onClose }) {
           {item.title}
         </h1>
         {item.offers_long_term && (
-          <p className="mt-2 text-xs font-bold text-[#0a84ff]">
+          <p className="mt-2 text-xs font-bold text-[#1B1F4D]">
             이 미션은 장기 합류로 이어질 수 있어요
           </p>
         )}
@@ -33,7 +33,7 @@ function ApplyModal({ item, onSubmit, onClose }) {
             value={note}
             onChange={(event) => setNote(event.target.value)}
             placeholder="왜 이 미션에 잘 맞다고 생각하는지 짧게 적어주세요."
-            className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
           />
         </label>
 
@@ -42,7 +42,7 @@ function ApplyModal({ item, onSubmit, onClose }) {
             type="button"
             disabled={isSubmitting}
             onClick={submit}
-            className="flex-1 rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset] shadow-[0_10px_20px_-8px_rgba(255,59,48,0.55)] transition hover:brightness-105 disabled:opacity-50"
+            className="flex-1 rounded-2xl bg-[#1B1F4D] px-5 py-4 text-sm font-black text-white shadow-[0_10px_20px_-8px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63] disabled:opacity-50"
           >
             {isSubmitting ? "지원 중..." : "미션 지원하기"}
           </button>

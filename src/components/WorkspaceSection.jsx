@@ -4,7 +4,7 @@ function titleFor(app, quests) {
 
 const STATUS_LABEL = {
   pending: ["대기중", "bg-amber-100 text-amber-700"],
-  accepted: ["진행중", "bg-[#0a84ff]/10 text-[#0a84ff]"],
+  accepted: ["진행중", "bg-[#1B1F4D]/8 text-[#1B1F4D]"],
   submitted: ["제출완료", "bg-emerald-100 text-emerald-700"],
   disputed: ["분쟁중", "bg-[#ff3b30]/10 text-[#ff3b30]"],
   closed: ["종료", "bg-slate-200 text-slate-600"],
@@ -26,14 +26,14 @@ function WorkspaceSection({ applications, quests, currentUser, onOpenApplication
     return (
       <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
         <div className="glass-strong mx-auto max-w-2xl rounded-[32px] p-8 text-center">
-          <p className="text-sm font-black text-[#0a84ff]">Workspace locked</p>
+          <p className="text-sm font-black text-[#1B1F4D]">Workspace locked</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">
             로그인 후 매칭 현황을 확인하세요
           </h1>
           <button
             type="button"
             onClick={onLogin}
-            className="mt-7 rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-6 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.55)] transition hover:brightness-105"
+            className="mt-7 rounded-2xl bg-[#1B1F4D] px-6 py-4 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63]"
           >
             로그인하기
           </button>
@@ -49,7 +49,7 @@ function WorkspaceSection({ applications, quests, currentUser, onOpenApplication
     <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-8">
         <div>
-          <p className="text-sm font-black text-[#0a84ff]">Matching workflow</p>
+          <p className="text-sm font-black text-[#1B1F4D]">Matching workflow</p>
           <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950">
             Workspace
           </h1>

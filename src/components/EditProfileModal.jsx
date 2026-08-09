@@ -40,7 +40,7 @@ function EditProfileModal({ user, profile, onSubmit, onClose, onDeleteAccount })
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-md">
       <form onSubmit={submit} className="glass-strong w-full max-w-md rounded-[28px] p-6">
-        <p className="text-sm font-black text-[#0a84ff]">gotchi profile</p>
+        <p className="text-sm font-black text-[#1B1F4D]">gotchi profile</p>
         <h2 className="mt-2 text-2xl font-black text-slate-950">프로필 수정</h2>
 
         <div className="mt-5 flex items-center gap-4">
@@ -57,7 +57,7 @@ function EditProfileModal({ user, profile, onSubmit, onClose, onDeleteAccount })
             required
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
-            className="glass-pill mt-2 w-full rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            className="glass-pill mt-2 w-full rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
           />
         </label>
 
@@ -67,14 +67,14 @@ function EditProfileModal({ user, profile, onSubmit, onClose, onDeleteAccount })
             value={role}
             onChange={(event) => setRole(event.target.value)}
             placeholder="예: Founder, Designer, Developer"
-            className="glass-pill mt-2 w-full rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            className="glass-pill mt-2 w-full rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
           />
         </label>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             disabled={isLoading || isUploading}
-            className="flex-1 rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.6)] transition hover:brightness-105 disabled:opacity-50"
+            className="flex-1 rounded-2xl bg-[#1B1F4D] px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63] disabled:opacity-50"
           >
             {isLoading ? "저장 중..." : "저장하기"}
           </button>
@@ -97,7 +97,7 @@ function EditProfileModal({ user, profile, onSubmit, onClose, onDeleteAccount })
                 <button
                   type="button"
                   onClick={onDeleteAccount}
-                  className="flex-1 rounded-2xl bg-[#ff3b30] px-4 py-2 text-sm font-black text-white hover:brightness-105"
+                  className="flex-1 rounded-2xl bg-[#ff3b30] px-4 py-2 text-sm font-black text-white hover:bg-[#262B63]"
                 >
                   네, 탈퇴할게요
                 </button>

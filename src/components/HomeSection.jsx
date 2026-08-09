@@ -26,7 +26,7 @@ function HomeSection({ quests, onCreateQuest, onSelectQuest }) {
       />
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 flex flex-col items-center text-center">
-          <p className="mb-3 text-sm font-bold text-[#0a84ff]">
+          <p className="mb-3 text-sm font-bold text-[#1B1F4D]">
             Real founder matching
           </p>
           <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
@@ -40,7 +40,7 @@ function HomeSection({ quests, onCreateQuest, onSelectQuest }) {
             <button
               type="button"
               onClick={onCreateQuest}
-              className="rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-6 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(255,59,48,0.55)] transition hover:brightness-105 active:scale-[0.98]"
+              className="rounded-2xl bg-[#1B1F4D] px-6 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63] active:scale-[0.98]"
             >
               미션 올리기
             </button>
@@ -55,7 +55,7 @@ function HomeSection({ quests, onCreateQuest, onSelectQuest }) {
               setVisibleCount(6);
             }}
             placeholder="제목, 내용, 역량으로 검색"
-            className="glass-pill w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            className="glass-pill w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
           />
         </div>
 
@@ -96,14 +96,14 @@ function QuestCard({ quest, onClick }) {
       role="button"
       tabIndex={0}
       onKeyDown={(event) => event.key === "Enter" && onClick?.()}
-      className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#ff3b30]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(255,59,48,0.35)]"
+      className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#1B1F4D]/20 hover:shadow-[0_16px_36px_-24px_rgba(27,31,77,0.3)]"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-black text-[#ff3b30]">
+        <span className="rounded-full bg-[#1B1F4D]/8 px-3 py-1 text-xs font-black text-[#1B1F4D]">
           #미션
         </span>
         {quest.offers_long_term && (
-          <span className="rounded-full bg-[#0a84ff]/10 px-3 py-1 text-xs font-black text-[#0a84ff]">
+          <span className="rounded-full bg-[#1B1F4D]/8 px-3 py-1 text-xs font-black text-[#1B1F4D]">
             장기 합류 가능
           </span>
         )}

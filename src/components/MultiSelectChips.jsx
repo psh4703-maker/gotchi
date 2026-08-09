@@ -53,7 +53,7 @@ function MultiSelectChips({ label, options, selected, onChange, allowCustom = tr
               }
             }}
             placeholder={placeholder}
-            className="glass-pill flex-1 rounded-2xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+            className="glass-pill flex-1 rounded-2xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
           />
           <button
             type="button"
@@ -72,7 +72,7 @@ function MultiSelectChips({ label, options, selected, onChange, allowCustom = tr
             .map((item) => (
               <span
                 key={item}
-                className="flex items-center gap-1 rounded-full bg-[#0a84ff]/10 px-3 py-1 text-xs font-bold text-[#0a84ff]"
+                className="flex items-center gap-1 rounded-full bg-[#1B1F4D]/8 px-3 py-1 text-xs font-bold text-[#1B1F4D]"
               >
                 {item}
                 <button

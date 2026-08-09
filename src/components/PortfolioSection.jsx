@@ -5,7 +5,7 @@ function PortfolioSection({ user, profile, quests, applications, reviews, onLogi
     return (
       <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
         <div className="glass-strong mx-auto max-w-3xl rounded-[32px] p-8 text-center">
-          <p className="text-sm font-black text-[#0a84ff]">Portfolio locked</p>
+          <p className="text-sm font-black text-[#1B1F4D]">Portfolio locked</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">
             로그인 후 내 활동을 확인하세요
           </h1>
@@ -15,7 +15,7 @@ function PortfolioSection({ user, profile, quests, applications, reviews, onLogi
           <button
             type="button"
             onClick={onLogin}
-            className="mt-7 rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-6 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.55)] transition hover:brightness-105"
+            className="mt-7 rounded-2xl bg-[#1B1F4D] px-6 py-4 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63]"
           >
             로그인하기
           </button>
@@ -115,7 +115,7 @@ function PortfolioSection({ user, profile, quests, applications, reviews, onLogi
         <ActivityPanel title="내 미션" items={quests} onDelete={onDeleteQuest} />
 
         <section className="glass rounded-3xl p-6">
-          <p className="text-sm font-bold text-[#0a84ff]">Peer Reputation</p>
+          <p className="text-sm font-bold text-[#1B1F4D]">Peer Reputation</p>
           <h2 className="mt-1 text-2xl font-black text-slate-950">
             동료들의 평판 피드백
           </h2>
@@ -241,7 +241,7 @@ function StatCard({ label, value }) {
 function StatusBadge({ status }) {
   const map = {
     pending: ["대기중", "bg-amber-100 text-amber-700"],
-    accepted: ["진행중", "bg-[#0a84ff]/10 text-[#0a84ff]"],
+    accepted: ["진행중", "bg-[#1B1F4D]/8 text-[#1B1F4D]"],
     submitted: ["제출완료", "bg-emerald-100 text-emerald-700"],
     disputed: ["분쟁중", "bg-[#ff3b30]/10 text-[#ff3b30]"],
     closed: ["종료", "bg-slate-200 text-slate-600"],
@@ -273,9 +273,9 @@ function ActivityPanel({ title, items, onDelete }) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-black text-[#0a84ff]">#미션</p>
+                  <p className="text-xs font-black text-[#1B1F4D]">#미션</p>
                   {item.offers_long_term && (
-                    <span className="rounded-full bg-[#0a84ff]/10 px-2 py-0.5 text-[10px] font-black text-[#0a84ff]">
+                    <span className="rounded-full bg-[#1B1F4D]/8 px-2 py-0.5 text-[10px] font-black text-[#1B1F4D]">
                       장기 합류 가능
                     </span>
                   )}

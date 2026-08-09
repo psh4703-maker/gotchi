@@ -121,7 +121,7 @@ function WorkspaceModal({
               )}
 
               {pairHistory?.length > 0 && (
-                <div className="rounded-2xl bg-[#0a84ff]/10 px-4 py-3 text-sm font-bold text-[#0a84ff]">
+                <div className="rounded-2xl bg-[#1B1F4D]/8 px-4 py-3 text-sm font-bold text-[#1B1F4D]">
                   🤝 이 사람과 벌써 {pairHistory.length}번째 협업이에요
                 </div>
               )}
@@ -194,7 +194,7 @@ function WorkspaceModal({
                         <div
                           className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm leading-6 ${
                             isMine
-                              ? "bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] text-white"
+                              ? "bg-[#1B1F4D] text-white"
                               : "glass-pill text-slate-700"
                           }`}
                         >
@@ -218,7 +218,7 @@ function WorkspaceModal({
                                   target="_blank"
                                   rel="noreferrer"
                                   className={`flex items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-bold underline ${
-                                    isMine ? "text-white" : "text-[#0a84ff]"
+                                    isMine ? "text-white" : "text-[#1B1F4D]"
                                   }`}
                                 >
                                   📎 {message.attachment_name}
@@ -243,7 +243,7 @@ function WorkspaceModal({
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && send()}
                   placeholder="메시지 보내기"
-                  className="glass-pill flex-1 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                  className="glass-pill flex-1 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
                 />
                 <button
                   type="button"
@@ -267,14 +267,14 @@ function WorkspaceModal({
                       value={submissionText}
                       onChange={(event) => setSubmissionText(event.target.value)}
                       placeholder="Figma 링크, 배포 URL, 또는 결과 요약을 남겨주세요"
-                      className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                      className="glass-pill mt-2 w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
                     />
                   </label>
                   <button
                     type="button"
                     onClick={() => onSubmitWork(submissionText)}
                     disabled={!submissionText.trim()}
-                    className="w-full rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(16,185,129,0.5)] transition hover:brightness-105 disabled:opacity-50"
+                    className="w-full rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(16,185,129,0.5)] transition hover:bg-[#262B63] disabled:opacity-50"
                   >
                     제출 완료
                   </button>
@@ -298,7 +298,7 @@ function WorkspaceModal({
                       <button
                         type="button"
                         onClick={onConfirmClose}
-                        className="flex-1 rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(16,185,129,0.5)] transition hover:brightness-105"
+                        className="flex-1 rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(16,185,129,0.5)] transition hover:bg-[#262B63]"
                       >
                         완료 확인
                       </button>
@@ -338,7 +338,7 @@ function WorkspaceModal({
                           value={paymentNote}
                           onChange={(event) => setPaymentNote(event.target.value)}
                           placeholder="예: 카카오뱅크 3333-01-1234567 예금주 김도윤"
-                          className="w-full resize-none rounded-2xl bg-white/70 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                          className="w-full resize-none rounded-2xl bg-white/70 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
                         />
                         <button
                           type="button"
@@ -380,7 +380,7 @@ function WorkspaceModal({
                   <button
                     type="button"
                     onClick={onRehire}
-                    className="mt-3 w-full rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(10,132,255,0.5)] transition hover:brightness-105"
+                    className="mt-3 w-full rounded-2xl bg-[#1B1F4D] px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(10,132,255,0.5)] transition hover:bg-[#262B63]"
                   >
                     이 사람과 다음 미션 시작하기
                   </button>

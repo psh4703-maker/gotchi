@@ -48,7 +48,7 @@ function NotificationBell({ notifications, onOpenNotification }) {
                       onOpenNotification(notif);
                     }}
                     className={`block w-full rounded-2xl px-3 py-3 text-left transition hover:bg-white/60 ${
-                      notif.is_read ? "" : "bg-[#0a84ff]/5"
+                      notif.is_read ? "" : "bg-[#1B1F4D]/5"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">

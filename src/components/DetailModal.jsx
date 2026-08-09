@@ -10,11 +10,11 @@ function DetailModal({ item, currentUser, myApplication, onApply, onOpenWorkspac
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-black text-[#ff3b30]">
+              <span className="rounded-full bg-[#1B1F4D]/8 px-3 py-1 text-xs font-black text-[#1B1F4D]">
                 #미션
               </span>
               {item.offers_long_term && (
-                <span className="rounded-full bg-[#0a84ff]/10 px-3 py-1 text-xs font-black text-[#0a84ff]">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
                   장기 합류 가능
                 </span>
               )}
@@ -61,8 +61,8 @@ function DetailModal({ item, currentUser, myApplication, onApply, onOpenWorkspac
         </div>
 
         {item.offers_long_term && (
-          <div className="mt-6 rounded-2xl border border-[#0a84ff]/20 bg-[#0a84ff]/5 p-5">
-            <p className="text-sm font-black text-[#0a84ff]">이 미션은 장기 합류로 이어질 수 있어요</p>
+          <div className="mt-6 rounded-2xl border border-[#1B1F4D]/20 bg-[#1B1F4D]/5 p-5">
+            <p className="text-sm font-black text-[#1B1F4D]">이 미션은 장기 합류로 이어질 수 있어요</p>
             <p className="mt-1 text-xs text-slate-500">
               지원 전에 미리 확인할 수 있는 팀 정보예요.
             </p>
@@ -122,7 +122,7 @@ function DetailModal({ item, currentUser, myApplication, onApply, onOpenWorkspac
             <button
               type="button"
               onClick={() => onOpenWorkspace(myApplication)}
-              className="w-full rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset] shadow-[0_10px_20px_-8px_rgba(255,59,48,0.55)] transition hover:brightness-105"
+              className="w-full rounded-2xl bg-[#1B1F4D] px-5 py-4 text-sm font-black text-white shadow-[0_10px_20px_-8px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63]"
             >
               이미 지원했어요 · 워크스페이스 열기
             </button>
@@ -130,7 +130,7 @@ function DetailModal({ item, currentUser, myApplication, onApply, onOpenWorkspac
             <button
               type="button"
               onClick={() => onApply(item)}
-              className="w-full rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-5 py-4 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset] shadow-[0_10px_20px_-8px_rgba(255,59,48,0.55)] transition hover:brightness-105"
+              className="w-full rounded-2xl bg-[#1B1F4D] px-5 py-4 text-sm font-black text-white shadow-[0_10px_20px_-8px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63]"
             >
               미션 지원하기
             </button>

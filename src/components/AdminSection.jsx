@@ -43,7 +43,7 @@ function AdminSection({ applications, quests, onResolve }) {
                   <button
                     type="button"
                     onClick={() => onResolve(app, "closed")}
-                    className="rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-black text-white hover:brightness-105"
+                    className="rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-black text-white hover:bg-[#262B63]"
                   >
                     완료로 확정
                   </button>
