@@ -13,15 +13,18 @@ import AdminSection from "./components/AdminSection";
 import Avatar from "./components/Avatar";
 import NotificationBell from "./components/NotificationBell";
 import RehireModal from "./components/RehireModal";
+import FreelancerSection from "./components/FreelancerSection";
+import FreelancerProfileModal from "./components/FreelancerProfileModal";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
   { id: "home", label: "Home" },
+  { id: "freelancer", label: "Freelancer" },
   { id: "workspace", label: "Workspace" },
   { id: "portfolio", label: "My Portfolio" },
 ];
 
-const PRIMARY_TAB_IDS = ["home", "workspace", "portfolio"];
+const PRIMARY_TAB_IDS = ["home", "freelancer", "workspace", "portfolio"];
 
 const SKILL_OPTIONS = [
   "기획력",
@@ -72,6 +75,9 @@ function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [quests, setQuests] = useState([]);
+  const [freelancers, setFreelancers] = useState([]);
+  const [freelancerTarget, setFreelancerTarget] = useState(null);
+  const [myPortfolioItems, setMyPortfolioItems] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
@@ -129,6 +135,7 @@ function App() {
       setApplications([]);
       setReviews([]);
       setNotifications([]);
+      setMyPortfolioItems([]);
       return;
     }
 
@@ -136,6 +143,7 @@ function App() {
     loadApplications(currentUser.id);
     loadReviews(currentUser.id);
     loadNotifications(currentUser.id);
+    loadMyPortfolioItems(currentUser.id);
   }, [currentUser]);
 
   useEffect(() => {
@@ -204,6 +212,33 @@ function App() {
     }
 
     setQuests(questData ?? []);
+    await loadFreelancers();
+  };
+
+  const loadFreelancers = async () => {
+    const { data: freelancerProfiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("is_freelancer", true)
+      .order("created_at", { ascending: false });
+
+    if (profileError || !freelancerProfiles?.length) {
+      setFreelancers([]);
+      return;
+    }
+
+    const { data: portfolioItems } = await supabase
+      .from("portfolio_items")
+      .select("*")
+      .in("owner_id", freelancerProfiles.map((p) => p.id))
+      .order("created_at", { ascending: false });
+
+    const withPortfolio = freelancerProfiles.map((profile) => ({
+      ...profile,
+      portfolio: (portfolioItems ?? []).filter((item) => item.owner_id === profile.id),
+    }));
+
+    setFreelancers(withPortfolio);
   };
 
   const loadProfile = async (userId) => {
@@ -218,10 +253,18 @@ function App() {
     }
   };
 
-  const updateProfile = async (displayName, role, avatarUrl) => {
+  const updateProfile = async (fields) => {
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: displayName, role, avatar_url: avatarUrl || "" })
+      .update({
+        display_name: fields.displayName,
+        role: fields.role,
+        avatar_url: fields.avatarUrl || "",
+        is_freelancer: fields.isFreelancer,
+        bio: fields.bio || "",
+        skills: fields.skills || [],
+        desired_terms: fields.desiredTerms || "",
+      })
       .eq("id", currentUser.id);
 
     if (error) {
@@ -232,6 +275,46 @@ function App() {
     setIsEditProfileOpen(false);
     setStatusMessage("프로필이 업데이트됐어요.");
     await loadProfile(currentUser.id);
+    await loadFreelancers();
+  };
+
+  const loadMyPortfolioItems = async (userId) => {
+    const { data, error } = await supabase
+      .from("portfolio_items")
+      .select("*")
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (!error) {
+      setMyPortfolioItems(data ?? []);
+    }
+  };
+
+  const addPortfolioItem = async (item) => {
+    const { error } = await supabase.from("portfolio_items").insert({
+      owner_id: currentUser.id,
+      title: item.title,
+      description: item.description,
+      link: item.link,
+      image_url: item.imageUrl,
+    });
+
+    if (error) {
+      setStatusMessage(friendlyError(error.message));
+      return;
+    }
+    await loadMyPortfolioItems(currentUser.id);
+    await loadFreelancers();
+  };
+
+  const deletePortfolioItem = async (itemId) => {
+    const { error } = await supabase.from("portfolio_items").delete().eq("id", itemId);
+    if (error) {
+      setStatusMessage(friendlyError(error.message));
+      return;
+    }
+    await loadMyPortfolioItems(currentUser.id);
+    await loadFreelancers();
   };
 
   const requireAuth = (nextTab) => {
@@ -557,6 +640,46 @@ function App() {
     await openWorkspace(newApplication);
   };
 
+  const proposeToFreelancer = async (fields) => {
+    if (!freelancerTarget || !currentUser) return;
+
+    const { data: newQuest, error: questError } = await supabase
+      .from("quests")
+      .insert({
+        owner_id: currentUser.id,
+        title: fields.title,
+        mission: fields.mission,
+        period: fields.period,
+        reward: fields.reward,
+        skills: [],
+      })
+      .select()
+      .single();
+
+    if (questError) {
+      setStatusMessage(friendlyError(questError.message));
+      return;
+    }
+
+    const { error: appError } = await supabase.from("applications").insert({
+      quest_id: newQuest.id,
+      applicant_id: freelancerTarget.id,
+      owner_id: currentUser.id,
+      note: "포트폴리오를 보고 먼저 미션을 제안했어요.",
+      status: "pending",
+    });
+
+    if (appError) {
+      setStatusMessage(friendlyError(appError.message));
+      return;
+    }
+
+    setFreelancerTarget(null);
+    setStatusMessage("미션을 제안했어요. 상대방이 수락하면 워크스페이스에서 진행할 수 있어요.");
+    await loadPublicData();
+    if (currentUser) await loadApplications(currentUser.id);
+  };
+
   const [attachmentUrls, setAttachmentUrls] = useState({});
 
   const loadMessages = async (applicationId) => {
@@ -797,6 +920,14 @@ function App() {
             onSelectQuest={openDetail}
           />
         );
+      case "freelancer":
+        return (
+          <FreelancerSection
+            freelancers={freelancers}
+            currentUser={currentUser}
+            onSelectFreelancer={(freelancer) => setFreelancerTarget(freelancer)}
+          />
+        );
       case "workspace":
         return (
           <WorkspaceSection
@@ -930,14 +1061,6 @@ function App() {
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
-            <button
-              type="button"
-              onClick={() => requireAuth("create-quest")}
-              className="hidden shrink-0 whitespace-nowrap rounded-full bg-[#1B1F4D] px-4 py-2 text-sm font-black text-white shadow-[0_10px_20px_-8px_rgba(27,31,77,0.5)] transition hover:bg-[#262B63] active:scale-[0.97] sm:inline-block"
-            >
-              미션 올리기
-            </button>
-
             {currentUser ? (
               <>
                 <NotificationBell notifications={notifications} onOpenNotification={openNotification} />
@@ -1040,6 +1163,25 @@ function App() {
         <RehireModal onSubmit={rehireCollaborator} onClose={() => setRehireTarget(null)} />
       )}
 
+      {freelancerTarget && !freelancerTarget.showProposeForm && (
+        <FreelancerProfileModal
+          freelancer={freelancerTarget}
+          onClose={() => setFreelancerTarget(null)}
+          onPropose={() => setFreelancerTarget({ ...freelancerTarget, showProposeForm: true })}
+        />
+      )}
+
+      {freelancerTarget?.showProposeForm && (
+        <RehireModal
+          eyebrow="Propose"
+          heading={`${freelancerTarget.display_name}님에게 미션 제안하기`}
+          description="포트폴리오를 보고 먼저 제안하는 미션이에요. 상대방이 수락하면 워크스페이스가 열려요."
+          submitLabel="제안 보내기"
+          onSubmit={proposeToFreelancer}
+          onClose={() => setFreelancerTarget(null)}
+        />
+      )}
+
       {reviewApp && (
         <ReviewModal
           onSubmit={(payload) => submitReviewForApp(reviewApp, payload)}
@@ -1051,9 +1193,12 @@ function App() {
         <EditProfileModal
           user={currentUser}
           profile={profile}
+          portfolioItems={myPortfolioItems}
           onSubmit={updateProfile}
           onClose={() => setIsEditProfileOpen(false)}
           onDeleteAccount={deleteAccount}
+          onAddPortfolioItem={addPortfolioItem}
+          onDeletePortfolioItem={deletePortfolioItem}
         />
       )}
 

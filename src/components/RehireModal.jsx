@@ -1,6 +1,13 @@
 import { useState } from "react";
 
-function RehireModal({ onSubmit, onClose }) {
+function RehireModal({
+  onSubmit,
+  onClose,
+  eyebrow = "Rehire",
+  heading = "이 사람과 다음 미션 시작하기",
+  description = "이미 한 번 같이 일해본 사이라 별도 지원/수락 절차 없이 바로 진행돼요.",
+  submitLabel = "바로 시작하기",
+}) {
   const [title, setTitle] = useState("");
   const [mission, setMission] = useState("");
   const [period, setPeriod] = useState("7일");
@@ -17,12 +24,12 @@ function RehireModal({ onSubmit, onClose }) {
   return (
     <div className="fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/40 px-4 py-8 backdrop-blur-md">
       <form onSubmit={submit} className="glass-strong w-full max-w-lg rounded-[32px] p-6 sm:p-8">
-        <p className="text-sm font-black text-[#1B1F4D]">Rehire</p>
+        <p className="text-sm font-black text-[#1B1F4D]">{eyebrow}</p>
         <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
-          이 사람과 다음 미션 시작하기
+          {heading}
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          이미 한 번 같이 일해본 사이라 별도 지원/수락 절차 없이 바로 진행돼요.
+          {description}
         </p>
 
         <label className="mt-5 block text-sm font-black text-slate-800">
@@ -74,7 +81,7 @@ function RehireModal({ onSubmit, onClose }) {
             disabled={isSubmitting}
             className="flex-1 rounded-2xl bg-[#1B1F4D] px-5 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63] disabled:opacity-50"
           >
-            {isSubmitting ? "시작하는 중..." : "바로 시작하기"}
+            {isSubmitting ? "시작하는 중..." : submitLabel}
           </button>
           <button
             type="button"

@@ -10,6 +10,58 @@ create table if not exists public.profiles (
 
 alter table public.profiles add column if not exists is_admin boolean not null default false;
 
+-- ============================================================
+-- Freelancer 탭: 구직 의사를 밝힌 사용자의 프로필 + 포트폴리오 갤러리
+-- ============================================================
+
+alter table public.profiles add column if not exists is_freelancer boolean not null default false;
+alter table public.profiles add column if not exists bio text not null default '';
+alter table public.profiles add column if not exists skills text[] not null default '{}';
+alter table public.profiles add column if not exists desired_terms text not null default '';
+
+create table if not exists public.portfolio_items (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  description text not null default '',
+  link text not null default '',
+  image_url text not null default '',
+  created_at timestamptz not null default now()
+);
+
+alter table public.portfolio_items enable row level security;
+
+drop policy if exists "Portfolio items are readable by everyone" on public.portfolio_items;
+create policy "Portfolio items are readable by everyone"
+on public.portfolio_items for select
+using (true);
+
+drop policy if exists "Owners can manage their portfolio items" on public.portfolio_items;
+create policy "Owners can manage their portfolio items"
+on public.portfolio_items for all
+using (auth.uid() = owner_id)
+with check (auth.uid() = owner_id);
+
+insert into storage.buckets (id, name, public)
+values ('portfolio', 'portfolio', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Portfolio images are publicly accessible" on storage.objects;
+create policy "Portfolio images are publicly accessible"
+on storage.objects for select
+using (bucket_id = 'portfolio');
+
+drop policy if exists "Users can upload their own portfolio images" on storage.objects;
+create policy "Users can upload their own portfolio images"
+on storage.objects for insert
+with check (bucket_id = 'portfolio' and auth.uid()::text = (storage.foldername(name))[1]);
+
+drop policy if exists "Users can delete their own portfolio images" on storage.objects;
+create policy "Users can delete their own portfolio images"
+on storage.objects for delete
+using (bucket_id = 'portfolio' and auth.uid()::text = (storage.foldername(name))[1]);
+
+
 create table if not exists public.quests (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
