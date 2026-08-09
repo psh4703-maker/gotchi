@@ -1,8 +1,5 @@
-function titleFor(app, quests, alliances) {
-  if (app.type === "quest") {
-    return quests.find((q) => q.id === app.quest_id)?.title ?? "삭제된 미션";
-  }
-  return alliances.find((a) => a.id === app.alliance_id)?.team_name ?? "삭제된 팀 모집글";
+function titleFor(app, quests) {
+  return quests.find((q) => q.id === app.quest_id)?.title ?? "삭제된 미션";
 }
 
 const STATUS_LABEL = {
@@ -24,7 +21,7 @@ function StatusPill({ status }) {
   );
 }
 
-function WorkspaceSection({ applications, quests, alliances, currentUser, onOpenApplication, onLogin }) {
+function WorkspaceSection({ applications, quests, currentUser, onOpenApplication, onLogin }) {
   if (!currentUser) {
     return (
       <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
@@ -57,7 +54,7 @@ function WorkspaceSection({ applications, quests, alliances, currentUser, onOpen
             Workspace
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-            지원한 미션·팀과, 내가 올린 글에 들어온 지원을 여기서 관리해요.
+            지원한 미션과, 내가 올린 미션에 들어온 지원을 여기서 관리해요.
           </p>
         </div>
 
@@ -65,16 +62,14 @@ function WorkspaceSection({ applications, quests, alliances, currentUser, onOpen
           title="내가 지원한 것"
           items={sent}
           quests={quests}
-          alliances={alliances}
           onOpen={onOpenApplication}
-          emptyText="아직 지원한 미션이나 팀이 없어요."
+          emptyText="아직 지원한 미션이 없어요."
         />
 
         <WorkspaceList
-          title="내 글에 들어온 지원"
+          title="내 미션에 들어온 지원"
           items={received}
           quests={quests}
-          alliances={alliances}
           onOpen={onOpenApplication}
           emptyText="아직 들어온 지원이 없어요."
         />
@@ -83,7 +78,7 @@ function WorkspaceSection({ applications, quests, alliances, currentUser, onOpen
   );
 }
 
-function WorkspaceList({ title, items, quests, alliances, onOpen, emptyText }) {
+function WorkspaceList({ title, items, quests, onOpen, emptyText }) {
   return (
     <section className="glass rounded-3xl p-6">
       <h2 className="text-xl font-black text-slate-950">{title}</h2>
@@ -99,11 +94,9 @@ function WorkspaceList({ title, items, quests, alliances, onOpen, emptyText }) {
               className="glass-pill flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-white/70"
             >
               <div>
-                <p className="text-xs font-black text-slate-400">
-                  {app.type === "quest" ? "#단기협업미션" : "#장기팀원모집"}
-                </p>
+                <p className="text-xs font-black text-slate-400">#미션</p>
                 <p className="mt-1 text-sm font-bold text-slate-800">
-                  {titleFor(app, quests, alliances)}
+                  {titleFor(app, quests)}
                 </p>
               </div>
               <StatusPill status={app.status} />

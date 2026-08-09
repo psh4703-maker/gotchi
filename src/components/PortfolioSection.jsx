@@ -1,6 +1,6 @@
 import Avatar from "./Avatar";
 
-function PortfolioSection({ user, profile, quests, alliances, applications, reviews, onLogin, onOpenApplication, onDeleteQuest, onDeleteAlliance, onEditProfile }) {
+function PortfolioSection({ user, profile, quests, applications, reviews, onLogin, onOpenApplication, onDeleteQuest, onEditProfile }) {
   if (!user) {
     return (
       <section className="min-h-screen px-5 py-10 sm:px-6 lg:px-8">
@@ -10,7 +10,7 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
             로그인 후 내 활동을 확인하세요
           </h1>
           <p className="mt-4 text-sm leading-7 text-slate-500">
-            My Portfolio는 실제 로그인한 사용자의 미션과 팀 모집 기록을 보여줍니다.
+            My Portfolio는 실제 로그인한 사용자의 미션 기록을 보여줍니다.
           </p>
           <button
             type="button"
@@ -80,9 +80,8 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
             <TrustScoreRing score={trust.score} isRookie={trust.isRookie} />
           </div>
 
-          <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
-            <StatCard label="내가 올린 단기 협업 미션" value={quests.length} />
-            <StatCard label="내가 올린 팀 모집글" value={alliances.length} />
+          <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="내가 올린 미션" value={quests.length} />
             <StatCard label="완료한 미션" value={closedAll.length} />
             <StatCard label="받은 평판" value={myPublicReviews.length} />
             <StatCard label="리뷰 작성률" value={`${myReviewCompletionRate}%`} />
@@ -113,10 +112,7 @@ function PortfolioSection({ user, profile, quests, alliances, applications, revi
           </section>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <ActivityPanel title="내 단기 협업 미션" items={quests} type="quest" onDelete={onDeleteQuest} />
-          <ActivityPanel title="내 팀 모집글" items={alliances} type="alliance" onDelete={onDeleteAlliance} />
-        </div>
+        <ActivityPanel title="내 미션" items={quests} onDelete={onDeleteQuest} />
 
         <section className="glass rounded-3xl p-6">
           <p className="text-sm font-bold text-[#0a84ff]">Peer Reputation</p>
@@ -260,7 +256,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function ActivityPanel({ title, items, type, onDelete }) {
+function ActivityPanel({ title, items, onDelete }) {
   return (
     <section className="glass rounded-3xl p-6">
       <h2 className="text-2xl font-black text-slate-950">{title}</h2>
@@ -276,9 +272,14 @@ function ActivityPanel({ title, items, type, onDelete }) {
               className="glass-pill rounded-2xl p-4"
             >
               <div className="flex items-start justify-between gap-3">
-                <p className="text-xs font-black text-[#0a84ff]">
-                  {type === "quest" ? "#단기협업미션" : "#장기팀원모집"}
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-black text-[#0a84ff]">#미션</p>
+                  {item.offers_long_term && (
+                    <span className="rounded-full bg-[#0a84ff]/10 px-2 py-0.5 text-[10px] font-black text-[#0a84ff]">
+                      장기 합류 가능
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => onDelete?.(item)}
@@ -287,12 +288,8 @@ function ActivityPanel({ title, items, type, onDelete }) {
                   삭제
                 </button>
               </div>
-              <h3 className="mt-2 text-lg font-black text-slate-950">
-                {type === "quest" ? item.title : item.team_name}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {type === "quest" ? item.mission : item.vision}
-              </p>
+              <h3 className="mt-2 text-lg font-black text-slate-950">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.mission}</p>
             </article>
           ))}
         </div>

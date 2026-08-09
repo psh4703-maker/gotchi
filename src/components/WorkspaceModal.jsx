@@ -68,9 +68,7 @@ function WorkspaceModal({
       <div className="glass-strong flex h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] sm:h-[85vh] sm:rounded-[32px]">
         <div className="flex items-start justify-between gap-4 border-b border-white/60 px-6 py-5 sm:px-8">
           <div>
-            <p className="text-xs font-black text-slate-400">
-              {application.type === "quest" ? "#단기협업미션" : "#장기팀원모집"}
-            </p>
+            <p className="text-xs font-black text-slate-400">#미션</p>
             <h1 className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
               {application.title}
             </h1>
@@ -327,8 +325,7 @@ function WorkspaceModal({
                 </p>
               )}
 
-              {["accepted", "submitted", "disputed", "closed"].includes(application.status) &&
-                application.type === "quest" && (
+              {["accepted", "submitted", "disputed", "closed"].includes(application.status) && (
                   <div className="glass-pill rounded-2xl p-4">
                     <p className="text-xs font-black text-slate-400">정산 안내 (수동 확인)</p>
                     <p className="mt-1 text-xs text-slate-500">

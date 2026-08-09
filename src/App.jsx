@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import AllianceSection from "./components/AllianceSection";
 import HomeSection from "./components/HomeSection";
 import PortfolioSection from "./components/PortfolioSection";
-import QuestSection from "./components/QuestSection";
 import WorkspaceSection from "./components/WorkspaceSection";
 import ApplyModal from "./components/ApplyModal";
 import DetailModal from "./components/DetailModal";
@@ -19,15 +17,12 @@ import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
   { id: "home", label: "Home" },
-  { id: "quest", label: "Quest" },
-  { id: "alliance", label: "Alliance" },
   { id: "workspace", label: "Workspace" },
   { id: "portfolio", label: "My Portfolio" },
 ];
 
 const PRIMARY_TAB_IDS = ["home", "workspace", "portfolio"];
 
-const ROLE_OPTIONS = ["경영", "기획/전략", "재무/회계", "디자인", "개발", "마케팅", "세일즈", "운영"];
 const SKILL_OPTIONS = [
   "기획력",
   "디자인 툴 숙련자",
@@ -47,7 +42,7 @@ const REWARD_OPTIONS = [
 ];
 const VALUE_OPTIONS = ["빠른 실험", "고객 집착", "투명한 커뮤니케이션", "데이터 기반 의사결정", "실행력", "수평적 문화"];
 const WORK_TYPE_OPTIONS = ["Remote-first", "주 1회 오프라인", "주 2-3회 오프라인", "상근(출근)"];
-const JOIN_PROCESS_OPTIONS = ["바로 장기 합류", "1개월 협업 후 논의", "3개월 협업 후 논의", "단기 협업 미션 완료 후 논의"];
+const JOIN_PROCESS_OPTIONS = ["1개월 협업 후 논의", "3개월 협업 후 논의", "이 미션 완료 후 바로 논의"];
 const MEMBER_TYPE_OPTIONS = ["Full-time", "Part-time", "Advisor"];
 
 function friendlyError(message) {
@@ -62,17 +57,14 @@ const emptyQuestForm = {
   rewardTags: [],
   rewardDetail: "",
   skills: [],
-};
-
-const emptyAllianceForm = {
+  offersLongTerm: false,
   teamName: "",
-  vision: "",
-  roles: [],
-  equity: "",
-  values: [],
-  joinProcess: JOIN_PROCESS_OPTIONS[1],
-  workType: WORK_TYPE_OPTIONS[0],
+  teamVision: "",
+  teamValues: [],
   teamMembers: [],
+  joinProcess: JOIN_PROCESS_OPTIONS[0],
+  workType: WORK_TYPE_OPTIONS[0],
+  longTermReward: "",
 };
 
 function App() {
@@ -80,7 +72,6 @@ function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [quests, setQuests] = useState([]);
-  const [alliances, setAlliances] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
@@ -88,7 +79,6 @@ function App() {
   const [authMode, setAuthMode] = useState("sign-in");
   const [statusMessage, setStatusMessage] = useState("");
   const [questForm, setQuestForm] = useState(emptyQuestForm);
-  const [allianceForm, setAllianceForm] = useState(emptyAllianceForm);
   const [applications, setApplications] = useState([]);
   const [adminApplications, setAdminApplications] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -171,43 +161,42 @@ function App() {
 
   useEffect(() => {
     if (didResolveDeepLink.current) return;
-    if (quests.length === 0 && alliances.length === 0) return;
+    if (quests.length === 0) return;
 
-    const match = window.location.pathname.match(/^\/(quest|alliance)\/([^/]+)$/);
+    const match = window.location.pathname.match(/^\/quest\/([^/]+)$/);
     if (match) {
-      const [, type, id] = match;
-      const item = (type === "quest" ? quests : alliances).find((entry) => entry.id === id);
+      const [, id] = match;
+      const item = quests.find((entry) => entry.id === id);
       if (item) {
-        setDetailTarget({ item, type });
+        setDetailTarget({ item, type: "quest" });
       }
     }
     didResolveDeepLink.current = true;
-  }, [quests, alliances]);
+  }, [quests]);
 
   useEffect(() => {
     const handlePopState = () => {
-      const match = window.location.pathname.match(/^\/(quest|alliance)\/([^/]+)$/);
+      const match = window.location.pathname.match(/^\/quest\/([^/]+)$/);
       if (!match) {
         setDetailTarget(null);
         return;
       }
-      const [, type, id] = match;
-      const item = (type === "quest" ? quests : alliances).find((entry) => entry.id === id);
-      setDetailTarget(item ? { item, type } : null);
+      const [, id] = match;
+      const item = quests.find((entry) => entry.id === id);
+      setDetailTarget(item ? { item, type: "quest" } : null);
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [quests, alliances]);
+  }, [quests]);
 
   const loadPublicData = async () => {
-    const [{ data: questData, error: questError }, { data: allianceData, error: allianceError }] =
-      await Promise.all([
-        supabase.from("quests").select("*").order("created_at", { ascending: false }),
-        supabase.from("alliances").select("*").order("created_at", { ascending: false }),
-      ]);
+    const { data: questData, error: questError } = await supabase
+      .from("quests")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    if (questError || allianceError) {
+    if (questError) {
       setStatusMessage(
         "데이터를 불러오지 못했습니다. Supabase 테이블과 정책 설정을 확인해주세요.",
       );
@@ -215,7 +204,6 @@ function App() {
     }
 
     setQuests(questData ?? []);
-    setAlliances(allianceData ?? []);
   };
 
   const loadProfile = async (userId) => {
@@ -281,6 +269,14 @@ function App() {
       period: questForm.period,
       reward,
       skills: questForm.skills,
+      offers_long_term: questForm.offersLongTerm,
+      team_name: questForm.offersLongTerm ? questForm.teamName : "",
+      team_vision: questForm.offersLongTerm ? questForm.teamVision : "",
+      team_values: questForm.offersLongTerm ? questForm.teamValues : [],
+      team_members: questForm.offersLongTerm ? questForm.teamMembers : [],
+      join_process: questForm.offersLongTerm ? questForm.joinProcess : "",
+      work_type: questForm.offersLongTerm ? questForm.workType : "",
+      long_term_reward: questForm.offersLongTerm ? questForm.longTermReward : "",
     });
 
     if (error) {
@@ -290,52 +286,12 @@ function App() {
 
     setQuestForm(emptyQuestForm);
     await loadPublicData();
-    setActiveTab("quest");
-  };
-
-  const createAlliance = async (event) => {
-    event.preventDefault();
-
-    if (!currentUser) {
-      setIsAuthOpen(true);
-      return;
-    }
-
-    const { error } = await supabase.from("alliances").insert({
-      owner_id: currentUser.id,
-      team_name: allianceForm.teamName,
-      vision: allianceForm.vision,
-      roles: allianceForm.roles,
-      equity: allianceForm.equity,
-      values: allianceForm.values,
-      join_process: allianceForm.joinProcess,
-      work_type: allianceForm.workType,
-      team_members: allianceForm.teamMembers,
-    });
-
-    if (error) {
-      setStatusMessage(friendlyError(error.message));
-      return;
-    }
-
-    setAllianceForm(emptyAllianceForm);
-    await loadPublicData();
-    setActiveTab("alliance");
+    setActiveTab("home");
   };
 
   const deleteQuest = async (quest) => {
     if (!window.confirm("이 미션을 삭제할까요? 되돌릴 수 없어요.")) return;
     const { error } = await supabase.from("quests").delete().eq("id", quest.id);
-    if (error) {
-      setStatusMessage(friendlyError(error.message));
-      return;
-    }
-    await loadPublicData();
-  };
-
-  const deleteAlliance = async (alliance) => {
-    if (!window.confirm("이 팀 모집글을 삭제할까요? 되돌릴 수 없어요.")) return;
-    const { error } = await supabase.from("alliances").delete().eq("id", alliance.id);
     if (error) {
       setStatusMessage(friendlyError(error.message));
       return;
@@ -446,19 +402,13 @@ function App() {
 
   const titleForApplication = (app) => {
     if (!app) return "";
-    if (app.type === "quest") {
-      return quests.find((q) => q.id === app.quest_id)?.title ?? "삭제된 미션";
-    }
-    return alliances.find((a) => a.id === app.alliance_id)?.team_name ?? "삭제된 팀 모집글";
+    return quests.find((q) => q.id === app.quest_id)?.title ?? "삭제된 미션";
   };
 
-  const findMyApplication = (item, type) => {
+  const findMyApplication = (item) => {
     if (!currentUser) return null;
     return applications.find(
-      (app) =>
-        app.applicant_id === currentUser.id &&
-        app.type === type &&
-        (type === "quest" ? app.quest_id === item.id : app.alliance_id === item.id),
+      (app) => app.applicant_id === currentUser.id && app.quest_id === item.id,
     );
   };
 
@@ -472,9 +422,9 @@ function App() {
     });
   };
 
-  const openDetail = (item, type) => {
-    setDetailTarget({ item, type });
-    window.history.pushState(null, "", `/${type}/${item.id}`);
+  const openDetail = (item) => {
+    setDetailTarget({ item, type: "quest" });
+    window.history.pushState(null, "", `/quest/${item.id}`);
   };
 
   const closeDetail = () => {
@@ -484,7 +434,7 @@ function App() {
     }
   };
 
-  const openApply = (item, type) => {
+  const openApply = (item) => {
     if (!currentUser) {
       setAuthMode("sign-in");
       setIsAuthOpen(true);
@@ -501,7 +451,7 @@ function App() {
       return;
     }
     setDetailTarget(null);
-    setApplyTarget({ item, type });
+    setApplyTarget({ item, type: "quest" });
   };
 
   const [pairHistory, setPairHistory] = useState([]);
@@ -585,7 +535,6 @@ function App() {
     const { data: newApplication, error: appError } = await supabase
       .from("applications")
       .insert({
-        type: "quest",
         quest_id: newQuest.id,
         applicant_id: collaboratorId,
         owner_id: currentUser.id,
@@ -681,12 +630,10 @@ function App() {
 
   const submitApplication = async (note) => {
     if (!applyTarget || !currentUser) return;
-    const { item, type } = applyTarget;
+    const { item } = applyTarget;
 
     const { error } = await supabase.from("applications").insert({
-      type,
-      quest_id: type === "quest" ? item.id : null,
-      alliance_id: type === "alliance" ? item.id : null,
+      quest_id: item.id,
       applicant_id: currentUser.id,
       owner_id: item.owner_id,
       note,
@@ -846,27 +793,8 @@ function App() {
         return (
           <HomeSection
             quests={quests}
-            alliances={alliances}
             onCreateQuest={() => requireAuth("create-quest")}
-            onCreateAlliance={() => requireAuth("create-alliance")}
-            onSelectQuest={(quest) => openDetail(quest, "quest")}
-            onSelectAlliance={(alliance) => openDetail(alliance, "alliance")}
-          />
-        );
-      case "quest":
-        return (
-          <QuestSection
-            quests={quests}
-            onCreateQuest={() => requireAuth("create-quest")}
-            onSelectQuest={(quest) => openDetail(quest, "quest")}
-          />
-        );
-      case "alliance":
-        return (
-          <AllianceSection
-            alliances={alliances}
-            onCreateAlliance={() => requireAuth("create-alliance")}
-            onSelectAlliance={(alliance) => openDetail(alliance, "alliance")}
+            onSelectQuest={openDetail}
           />
         );
       case "workspace":
@@ -874,7 +802,6 @@ function App() {
           <WorkspaceSection
             applications={applications}
             quests={quests}
-            alliances={alliances}
             currentUser={currentUser}
             onOpenApplication={openWorkspace}
             onLogin={() => setIsAuthOpen(true)}
@@ -886,19 +813,14 @@ function App() {
             user={currentUser}
             profile={profile}
             quests={quests.filter((quest) => quest.owner_id === currentUser?.id)}
-            alliances={alliances.filter((alliance) => alliance.owner_id === currentUser?.id)}
             applications={applications.map((app) => ({
               ...app,
-              title:
-                app.type === "quest"
-                  ? quests.find((q) => q.id === app.quest_id)?.title ?? "삭제된 미션"
-                  : alliances.find((a) => a.id === app.alliance_id)?.team_name ?? "삭제된 팀 모집글",
+              title: quests.find((q) => q.id === app.quest_id)?.title ?? "삭제된 미션",
             }))}
             reviews={reviews}
             onLogin={() => setIsAuthOpen(true)}
             onOpenApplication={openWorkspace}
             onDeleteQuest={deleteQuest}
-            onDeleteAlliance={deleteAlliance}
             onEditProfile={() => setIsEditProfileOpen(true)}
           />
         );
@@ -907,7 +829,6 @@ function App() {
           <AdminSection
             applications={adminApplications}
             quests={quests}
-            alliances={alliances}
             onResolve={resolveDispute}
           />
         ) : null;
@@ -917,16 +838,7 @@ function App() {
             form={questForm}
             setForm={setQuestForm}
             onSubmit={createQuest}
-            onCancel={() => setActiveTab("quest")}
-          />
-        );
-      case "create-alliance":
-        return (
-          <CreateAllianceSection
-            form={allianceForm}
-            setForm={setAllianceForm}
-            onSubmit={createAlliance}
-            onCancel={() => setActiveTab("alliance")}
+            onCancel={() => setActiveTab("home")}
           />
         );
       default:
@@ -1049,14 +961,6 @@ function App() {
               미션 올리기
             </button>
 
-            <button
-              type="button"
-              onClick={() => requireAuth("create-alliance")}
-              className="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-4 py-2 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_10px_20px_-8px_rgba(10,132,255,0.6)] transition hover:brightness-105 active:scale-[0.97]"
-            >
-              팀 모집 올리기
-            </button>
-
             <div className="hidden shrink-0 items-center gap-2 sm:flex">
               {currentUser ? (
                 <>
@@ -1120,25 +1024,17 @@ function App() {
 
       {detailTarget && (
         <DetailModal
-          type={detailTarget.type}
           item={detailTarget.item}
           currentUser={currentUser}
-          myApplication={findMyApplication(detailTarget.item, detailTarget.type)}
-          relatedQuest={
-            detailTarget.type === "alliance"
-              ? quests.find((q) => q.owner_id === detailTarget.item.owner_id)
-              : null
-          }
+          myApplication={findMyApplication(detailTarget.item)}
           onApply={openApply}
           onOpenWorkspace={openWorkspace}
-          onSelectQuest={(quest) => openDetail(quest, "quest")}
           onClose={closeDetail}
         />
       )}
 
       {applyTarget && (
         <ApplyModal
-          type={applyTarget.type}
           item={applyTarget.item}
           onSubmit={submitApplication}
           onClose={() => setApplyTarget(null)}
@@ -1486,8 +1382,20 @@ function ResetPasswordModal({ onClose, onDone }) {
 }
 
 function CreateQuestSection({ form, setForm, onSubmit, onCancel }) {
+  const [memberDraft, setMemberDraft] = useState({ name: "", role: "", type: MEMBER_TYPE_OPTIONS[0] });
+
+  const addMember = () => {
+    if (!memberDraft.name.trim() || !memberDraft.role.trim()) return;
+    setForm((prev) => ({ ...prev, teamMembers: [...prev.teamMembers, memberDraft] }));
+    setMemberDraft({ name: "", role: "", type: MEMBER_TYPE_OPTIONS[0] });
+  };
+
+  const removeMember = (index) => {
+    setForm((prev) => ({ ...prev, teamMembers: prev.teamMembers.filter((_, i) => i !== index) }));
+  };
+
   return (
-    <EditorShell title="새 단기 협업 미션 올리기" eyebrow="Create Short-term Mission">
+    <EditorShell title="새 미션 올리기" eyebrow="Create Mission">
       <form onSubmit={onSubmit} className="space-y-5">
         <TextInput label="미션 제목" value={form.title} onChange={(value) => setForm((prev) => ({ ...prev, title: value }))} />
         <TextareaInput label="해결이 필요한 구체적 미션" value={form.mission} onChange={(value) => setForm((prev) => ({ ...prev, mission: value }))} />
@@ -1514,133 +1422,130 @@ function CreateQuestSection({ form, setForm, onSubmit, onCancel }) {
           placeholder="예: 800,000원"
         />
 
-        <EditorActions submitLabel="미션 등록하기" onCancel={onCancel} />
-      </form>
-    </EditorShell>
-  );
-}
+        <div className="rounded-2xl border border-dashed border-slate-300 p-4">
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={form.offersLongTerm}
+              onChange={(event) => setForm((prev) => ({ ...prev, offersLongTerm: event.target.checked }))}
+              className="h-4 w-4"
+            />
+            <span className="text-sm font-black text-slate-800">
+              이 미션은 장기 합류로 이어질 수 있어요
+            </span>
+          </label>
+          <p className="mt-1 pl-7 text-xs text-slate-500">
+            체크하면 지원자가 미션 지원 전에 팀 정보를 미리 볼 수 있어요.
+          </p>
 
-function CreateAllianceSection({ form, setForm, onSubmit, onCancel }) {
-  const [memberDraft, setMemberDraft] = useState({ name: "", role: "", type: MEMBER_TYPE_OPTIONS[0] });
+          {form.offersLongTerm && (
+            <div className="mt-5 space-y-5 border-t border-slate-200 pt-5">
+              <TextInput label="팀 이름" value={form.teamName} onChange={(value) => setForm((prev) => ({ ...prev, teamName: value }))} />
+              <TextareaInput label="팀 비전" value={form.teamVision} onChange={(value) => setForm((prev) => ({ ...prev, teamVision: value }))} />
 
-  const addMember = () => {
-    if (!memberDraft.name.trim() || !memberDraft.role.trim()) return;
-    setForm((prev) => ({ ...prev, teamMembers: [...prev.teamMembers, memberDraft] }));
-    setMemberDraft({ name: "", role: "", type: MEMBER_TYPE_OPTIONS[0] });
-  };
+              <MultiSelectChips
+                label="팀 가치관"
+                options={VALUE_OPTIONS}
+                selected={form.teamValues}
+                onChange={(teamValues) => setForm((prev) => ({ ...prev, teamValues }))}
+              />
 
-  const removeMember = (index) => {
-    setForm((prev) => ({ ...prev, teamMembers: prev.teamMembers.filter((_, i) => i !== index) }));
-  };
+              <TextInput
+                label="장기 합류시 조건 (현금 우선, 지분은 추후 별도 협의)"
+                value={form.longTermReward}
+                onChange={(value) => setForm((prev) => ({ ...prev, longTermReward: value }))}
+                placeholder="예: 활동비 지급, 세부 조건은 협의 후 결정"
+              />
 
-  return (
-    <EditorShell title="장기 팀원 모집글 올리기" eyebrow="Create Long-term Team">
-      <form onSubmit={onSubmit} className="space-y-5">
-        <TextInput label="팀 이름" value={form.teamName} onChange={(value) => setForm((prev) => ({ ...prev, teamName: value }))} />
-        <TextareaInput label="팀 비전" value={form.vision} onChange={(value) => setForm((prev) => ({ ...prev, vision: value }))} />
-
-        <MultiSelectChips
-          label="모집 직군"
-          options={ROLE_OPTIONS}
-          selected={form.roles}
-          onChange={(roles) => setForm((prev) => ({ ...prev, roles }))}
-        />
-
-        <TextInput label="보상 조건 (현금 우선, 지분은 추후 별도 협의)" value={form.equity} onChange={(value) => setForm((prev) => ({ ...prev, equity: value }))} placeholder="예: 활동비 지급, 세부 조건은 협의 후 결정" />
-
-        <MultiSelectChips
-          label="팀 가치관"
-          options={VALUE_OPTIONS}
-          selected={form.values}
-          onChange={(values) => setForm((prev) => ({ ...prev, values }))}
-        />
-
-        <div>
-          <p className="text-sm font-black text-slate-800">근무 형태</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {WORK_TYPE_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setForm((prev) => ({ ...prev, workType: option }))}
-                className={`rounded-full px-3 py-2 text-xs font-bold transition ${
-                  form.workType === option ? "bg-slate-950 text-white" : "glass-pill text-slate-600 hover:bg-white/70"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-black text-slate-800">합류 방식</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {JOIN_PROCESS_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setForm((prev) => ({ ...prev, joinProcess: option }))}
-                className={`rounded-full px-3 py-2 text-xs font-bold transition ${
-                  form.joinProcess === option ? "bg-slate-950 text-white" : "glass-pill text-slate-600 hover:bg-white/70"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-black text-slate-800">현재 팀원 (선택)</p>
-          {form.teamMembers.length > 0 && (
-            <div className="mt-2 space-y-2">
-              {form.teamMembers.map((member, index) => (
-                <div key={`${member.name}-${index}`} className="glass-pill flex items-center justify-between rounded-2xl px-4 py-2">
-                  <span className="text-sm font-bold text-slate-700">
-                    {member.name} · {member.role}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-slate-950 px-2 py-1 text-xs font-black text-white">{member.type}</span>
-                    <button type="button" onClick={() => removeMember(index)} className="text-xs font-black text-slate-400 hover:text-slate-900">
-                      x
+              <div>
+                <p className="text-sm font-black text-slate-800">근무 형태</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {WORK_TYPE_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, workType: option }))}
+                      className={`rounded-full px-3 py-2 text-xs font-bold transition ${
+                        form.workType === option ? "bg-slate-950 text-white" : "glass-pill text-slate-600 hover:bg-white/70"
+                      }`}
+                    >
+                      {option}
                     </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div>
+                <p className="text-sm font-black text-slate-800">합류 방식</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {JOIN_PROCESS_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, joinProcess: option }))}
+                      className={`rounded-full px-3 py-2 text-xs font-bold transition ${
+                        form.joinProcess === option ? "bg-slate-950 text-white" : "glass-pill text-slate-600 hover:bg-white/70"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-black text-slate-800">현재 팀원 (선택)</p>
+                {form.teamMembers.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {form.teamMembers.map((member, index) => (
+                      <div key={`${member.name}-${index}`} className="glass-pill flex items-center justify-between rounded-2xl px-4 py-2">
+                        <span className="text-sm font-bold text-slate-700">
+                          {member.name} · {member.role}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-slate-950 px-2 py-1 text-xs font-black text-white">{member.type}</span>
+                          <button type="button" onClick={() => removeMember(index)} className="text-xs font-black text-slate-400 hover:text-slate-900">
+                            x
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <input
+                    value={memberDraft.name}
+                    onChange={(event) => setMemberDraft((prev) => ({ ...prev, name: event.target.value }))}
+                    placeholder="이름"
+                    className="glass-pill w-28 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                  />
+                  <input
+                    value={memberDraft.role}
+                    onChange={(event) => setMemberDraft((prev) => ({ ...prev, role: event.target.value }))}
+                    placeholder="역할 (예: Founder / Product)"
+                    className="glass-pill flex-1 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
+                  />
+                  <select
+                    value={memberDraft.type}
+                    onChange={(event) => setMemberDraft((prev) => ({ ...prev, type: event.target.value }))}
+                    className="glass-pill rounded-2xl px-3 py-2 text-sm outline-none"
+                  >
+                    {MEMBER_TYPE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={addMember} className="glass-pill rounded-2xl px-4 py-2 text-sm font-black text-slate-600 hover:bg-white/70">
+                    팀원 추가
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-          <div className="mt-2 flex flex-wrap gap-2">
-            <input
-              value={memberDraft.name}
-              onChange={(event) => setMemberDraft((prev) => ({ ...prev, name: event.target.value }))}
-              placeholder="이름"
-              className="glass-pill w-28 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
-            />
-            <input
-              value={memberDraft.role}
-              onChange={(event) => setMemberDraft((prev) => ({ ...prev, role: event.target.value }))}
-              placeholder="역할 (예: Founder / Product)"
-              className="glass-pill flex-1 rounded-2xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
-            />
-            <select
-              value={memberDraft.type}
-              onChange={(event) => setMemberDraft((prev) => ({ ...prev, type: event.target.value }))}
-              className="glass-pill rounded-2xl px-3 py-2 text-sm outline-none"
-            >
-              {MEMBER_TYPE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={addMember} className="glass-pill rounded-2xl px-4 py-2 text-sm font-black text-slate-600 hover:bg-white/70">
-              팀원 추가
-            </button>
-          </div>
         </div>
 
-        <EditorActions submitLabel="팀 모집 등록하기" onCancel={onCancel} />
+        <EditorActions submitLabel="미션 등록하기" onCancel={onCancel} />
       </form>
     </EditorShell>
   );

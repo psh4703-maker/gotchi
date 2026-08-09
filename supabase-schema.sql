@@ -19,30 +19,31 @@ create table if not exists public.quests (
   reward text not null,
   skills text[] not null default '{}',
   status text not null default 'open',
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.alliances (
-  id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null references auth.users(id) on delete cascade,
-  team_name text not null,
-  vision text not null,
-  roles text[] not null default '{}',
-  equity text not null,
-  values text[] not null default '{}',
+  -- 장기 합류 관련 정보 (선택): 미션 지원자가 지원 전에 미리 확인할 수 있는 팀 맥락
+  offers_long_term boolean not null default false,
+  team_name text not null default '',
+  team_vision text not null default '',
+  team_values text[] not null default '{}',
+  team_members jsonb not null default '[]',
   join_process text not null default '',
   work_type text not null default '',
-  team_members jsonb not null default '[]',
+  long_term_reward text not null default '',
   created_at timestamptz not null default now()
 );
 
-alter table public.alliances add column if not exists join_process text not null default '';
-alter table public.alliances add column if not exists work_type text not null default '';
-alter table public.alliances add column if not exists team_members jsonb not null default '[]';
+alter table public.quests add column if not exists offers_long_term boolean not null default false;
+alter table public.quests add column if not exists team_name text not null default '';
+alter table public.quests add column if not exists team_vision text not null default '';
+alter table public.quests add column if not exists team_values text[] not null default '{}';
+alter table public.quests add column if not exists team_members jsonb not null default '[]';
+alter table public.quests add column if not exists join_process text not null default '';
+alter table public.quests add column if not exists work_type text not null default '';
+alter table public.quests add column if not exists long_term_reward text not null default '';
+
+drop table if exists public.alliances cascade;
 
 alter table public.profiles enable row level security;
 alter table public.quests enable row level security;
-alter table public.alliances enable row level security;
 
 drop policy if exists "Profiles are readable by everyone" on public.profiles;
 create policy "Profiles are readable by everyone"
@@ -79,26 +80,6 @@ create policy "Owners can delete their quests"
 on public.quests for delete
 using (auth.uid() = owner_id);
 
-drop policy if exists "Alliances are readable by everyone" on public.alliances;
-create policy "Alliances are readable by everyone"
-on public.alliances for select
-using (true);
-
-drop policy if exists "Logged-in users can create alliances" on public.alliances;
-create policy "Logged-in users can create alliances"
-on public.alliances for insert
-with check (auth.uid() = owner_id);
-
-drop policy if exists "Owners can update their alliances" on public.alliances;
-create policy "Owners can update their alliances"
-on public.alliances for update
-using (auth.uid() = owner_id);
-
-drop policy if exists "Owners can delete their alliances" on public.alliances;
-create policy "Owners can delete their alliances"
-on public.alliances for delete
-using (auth.uid() = owner_id);
-
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -129,9 +110,7 @@ for each row execute procedure public.handle_new_user();
 
 create table if not exists public.applications (
   id uuid primary key default gen_random_uuid(),
-  type text not null check (type in ('quest', 'alliance')),
   quest_id uuid references public.quests(id) on delete cascade,
-  alliance_id uuid references public.alliances(id) on delete cascade,
   applicant_id uuid not null references auth.users(id) on delete cascade,
   owner_id uuid not null references auth.users(id) on delete cascade,
   note text not null default '',
@@ -144,12 +123,14 @@ create table if not exists public.applications (
   payment_note text not null default '',
   payment_confirmed boolean not null default false,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint applications_target_check check (
-    (type = 'quest' and quest_id is not null and alliance_id is null) or
-    (type = 'alliance' and alliance_id is not null and quest_id is null)
-  )
+  updated_at timestamptz not null default now()
 );
+
+-- 예전 팀모집(alliance) 개념을 쓰던 시절의 컬럼/제약을 정리 (있으면 제거, 없으면 무시)
+alter table public.applications drop constraint if exists applications_target_check;
+alter table public.applications drop column if exists alliance_id;
+alter table public.applications drop column if exists type;
+alter table public.applications alter column quest_id set not null;
 
 alter table public.applications add column if not exists payment_note text not null default '';
 alter table public.applications add column if not exists payment_confirmed boolean not null default false;
@@ -318,20 +299,7 @@ create trigger quests_rate_limit
 before insert on public.quests
 for each row execute function public.enforce_quest_rate_limit();
 
-create or replace function public.enforce_alliance_rate_limit()
-returns trigger language plpgsql as $$
-begin
-  if (select count(*) from public.alliances where owner_id = new.owner_id and created_at > now() - interval '24 hours') >= 5 then
-    raise exception 'RATE_LIMIT: 하루에 올릴 수 있는 팀 모집글은 최대 5개예요. 내일 다시 시도해주세요.';
-  end if;
-  return new;
-end;
-$$;
-
-drop trigger if exists alliances_rate_limit on public.alliances;
-create trigger alliances_rate_limit
-before insert on public.alliances
-for each row execute function public.enforce_alliance_rate_limit();
+drop function if exists public.enforce_alliance_rate_limit() cascade;
 
 create or replace function public.enforce_application_rate_limit()
 returns trigger language plpgsql as $$
@@ -416,11 +384,7 @@ declare
 begin
   select email into owner_email from auth.users where id = new.owner_id;
 
-  if new.type = 'quest' then
-    select title into mission_title from public.quests where id = new.quest_id;
-  else
-    select team_name into mission_title from public.alliances where id = new.alliance_id;
-  end if;
+  select title into mission_title from public.quests where id = new.quest_id;
 
   perform public.send_email(
     owner_email,
@@ -451,11 +415,7 @@ begin
     return new;
   end if;
 
-  if new.type = 'quest' then
-    select title into mission_title from public.quests where id = new.quest_id;
-  else
-    select team_name into mission_title from public.alliances where id = new.alliance_id;
-  end if;
+  select title into mission_title from public.quests where id = new.quest_id;
 
   if new.status = 'accepted' then
     select email into target_email from auth.users where id = new.applicant_id;
@@ -629,11 +589,7 @@ declare
 begin
   select email into owner_email from auth.users where id = new.owner_id;
 
-  if new.type = 'quest' then
-    select title into mission_title from public.quests where id = new.quest_id;
-  else
-    select team_name into mission_title from public.alliances where id = new.alliance_id;
-  end if;
+  select title into mission_title from public.quests where id = new.quest_id;
 
   perform public.send_email(
     owner_email,
@@ -668,11 +624,7 @@ begin
     return new;
   end if;
 
-  if new.type = 'quest' then
-    select title into mission_title from public.quests where id = new.quest_id;
-  else
-    select team_name into mission_title from public.alliances where id = new.alliance_id;
-  end if;
+  select title into mission_title from public.quests where id = new.quest_id;
 
   if new.status = 'accepted' then
     target_user_id := new.applicant_id;

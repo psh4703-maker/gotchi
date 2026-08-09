@@ -1,37 +1,22 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSelectQuest, onSelectAlliance }) {
-  const [filter, setFilter] = useState("all");
+function HomeSection({ quests, onCreateQuest, onSelectQuest }) {
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(6);
 
-  const feedItems = useMemo(() => {
-    const questItems = quests.map((quest) => ({ ...quest, type: "quest" }));
-    const allianceItems = alliances.map((alliance) => ({
-      ...alliance,
-      type: "alliance",
-    }));
-
-    return [...questItems, ...allianceItems].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at),
-    );
-  }, [quests, alliances]);
-
   const normalizedQuery = query.trim().toLowerCase();
 
-  const filteredItems = feedItems
-    .filter((item) => filter === "all" || item.type === filter)
-    .filter((item) => {
+  const filteredQuests = quests
+    .slice()
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .filter((quest) => {
       if (!normalizedQuery) return true;
-      const haystack =
-        item.type === "quest"
-          ? [item.title, item.mission, ...(item.skills ?? [])]
-          : [item.team_name, item.vision, ...(item.roles ?? []), ...(item.values ?? [])];
-      return haystack.join(" ").toLowerCase().includes(normalizedQuery);
+      const haystack = [quest.title, quest.mission, ...(quest.skills ?? [])].join(" ").toLowerCase();
+      return haystack.includes(normalizedQuery);
     });
 
-  const visibleItems = filteredItems.slice(0, visibleCount);
-  const hasMore = filteredItems.length > visibleCount;
+  const visibleQuests = filteredQuests.slice(0, visibleCount);
+  const hasMore = filteredQuests.length > visibleCount;
 
   return (
     <section className="relative min-h-screen px-5 py-10 sm:px-6 lg:px-8">
@@ -51,50 +36,18 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
             단기적인 보상으로 시작된 협업이, 끈끈한 결속력이 되는 경험을 gotchi가 제공합니다
           </p>
 
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-7">
             <button
               type="button"
               onClick={onCreateQuest}
-              className="rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-5 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(255,59,48,0.55)] transition hover:brightness-105 active:scale-[0.98]"
+              className="rounded-2xl bg-gradient-to-b from-[#ff5b4d] to-[#ff3b30] px-6 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(255,59,48,0.55)] transition hover:brightness-105 active:scale-[0.98]"
             >
-              단기 협업 미션 올리기
-            </button>
-            <button
-              type="button"
-              onClick={onCreateAlliance}
-              className="rounded-2xl bg-gradient-to-b from-[#3aa0ff] to-[#0a84ff] px-5 py-3 text-sm font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_14px_24px_-10px_rgba(10,132,255,0.55)] transition hover:brightness-105 active:scale-[0.98]"
-            >
-              팀 모집 올리기
+              미션 올리기
             </button>
           </div>
         </div>
 
-        <div
-          className="glass mb-6 flex flex-col gap-3 rounded-2xl p-2 sm:flex-row sm:items-center"
-        >
-          <div className="flex flex-wrap gap-2">
-            {[
-              ["all", "전체 보기"],
-              ["quest", "단기 협업 미션만 보기"],
-              ["alliance", "장기 팀원 모집만 보기"],
-            ].map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => {
-                  setFilter(id);
-                  setVisibleCount(6);
-                }}
-                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
-                  filter === id
-                    ? "bg-slate-950 text-white shadow-[0_10px_18px_-8px_rgba(15,23,42,0.5)]"
-                    : "text-slate-500 hover:bg-white/60"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+        <div className="glass mb-6 flex items-center rounded-2xl p-2">
           <input
             value={query}
             onChange={(event) => {
@@ -102,25 +55,21 @@ function HomeSection({ quests, alliances, onCreateQuest, onCreateAlliance, onSel
               setVisibleCount(6);
             }}
             placeholder="제목, 내용, 역량으로 검색"
-            className="glass-pill w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15 sm:ml-auto sm:w-64"
+            className="glass-pill w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#0a84ff]/15"
           />
         </div>
 
-        {filteredItems.length === 0 ? (
+        {filteredQuests.length === 0 ? (
           <EmptyState
-            title="아직 올라온 글이 없습니다"
-            description="첫 단기 협업 미션이나 팀 모집글을 올려 gotchi를 시작해보세요."
+            title="아직 올라온 미션이 없습니다"
+            description="첫 미션을 올려 gotchi를 시작해보세요."
           />
         ) : (
           <>
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {visibleItems.map((item) =>
-                item.type === "quest" ? (
-                  <QuestCard key={item.id} quest={item} onClick={() => onSelectQuest?.(item)} />
-                ) : (
-                  <AllianceCard key={item.id} alliance={item} onClick={() => onSelectAlliance?.(item)} />
-                ),
-              )}
+              {visibleQuests.map((quest) => (
+                <QuestCard key={quest.id} quest={quest} onClick={() => onSelectQuest?.(quest)} />
+              ))}
             </div>
             {hasMore && (
               <div className="mt-8 flex justify-center">
@@ -149,9 +98,16 @@ function QuestCard({ quest, onClick }) {
       onKeyDown={(event) => event.key === "Enter" && onClick?.()}
       className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#ff3b30]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(255,59,48,0.35)]"
     >
-      <span className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-black text-[#ff3b30]">
-        #단기협업미션
-      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-black text-[#ff3b30]">
+          #미션
+        </span>
+        {quest.offers_long_term && (
+          <span className="rounded-full bg-[#0a84ff]/10 px-3 py-1 text-xs font-black text-[#0a84ff]">
+            장기 합류 가능
+          </span>
+        )}
+      </div>
       <h2 className="mt-5 text-xl font-black text-slate-950">{quest.title}</h2>
       <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{quest.mission}</p>
       <div className="mt-5 space-y-2 text-sm text-slate-600">
@@ -163,36 +119,6 @@ function QuestCard({ quest, onClick }) {
         </p>
       </div>
       <TagList tags={quest.skills} />
-    </article>
-  );
-}
-
-function AllianceCard({ alliance, onClick }) {
-  return (
-    <article
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => event.key === "Enter" && onClick?.()}
-      className="glass glass-card cursor-pointer rounded-3xl p-6 hover:border-[#0a84ff]/30 hover:shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_28px_48px_-24px_rgba(10,132,255,0.35)]"
-    >
-      <span className="rounded-full bg-[#0a84ff]/10 px-3 py-1 text-xs font-black text-[#0a84ff]">
-        #장기팀원모집
-      </span>
-      <h2 className="mt-5 text-xl font-black text-slate-950">
-        {alliance.team_name}
-      </h2>
-      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{alliance.vision}</p>
-      <div className="mt-5 space-y-2 text-sm text-slate-600">
-        <p>
-          <strong className="text-slate-950">구인 직군:</strong>{" "}
-          {alliance.roles.join(" · ")}
-        </p>
-        <p>
-          <strong className="text-slate-950">보상 조건:</strong> {alliance.equity}
-        </p>
-      </div>
-      <TagList tags={alliance.values} />
     </article>
   );
 }

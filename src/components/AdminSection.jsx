@@ -1,11 +1,8 @@
-function titleFor(app, quests, alliances) {
-  if (app.type === "quest") {
-    return quests.find((q) => q.id === app.quest_id)?.title ?? "삭제된 미션";
-  }
-  return alliances.find((a) => a.id === app.alliance_id)?.team_name ?? "삭제된 팀 모집글";
+function titleFor(app, quests) {
+  return quests.find((q) => q.id === app.quest_id)?.title ?? "삭제된 미션";
 }
 
-function AdminSection({ applications, quests, alliances, onResolve }) {
+function AdminSection({ applications, quests, onResolve }) {
   const disputed = applications.filter((app) => app.status === "disputed");
   const others = applications.filter((app) => app.status !== "disputed");
 
@@ -28,11 +25,9 @@ function AdminSection({ applications, quests, alliances, onResolve }) {
           <div className="space-y-4">
             {disputed.map((app) => (
               <div key={app.id} className="glass rounded-3xl p-6">
-                <p className="text-xs font-black text-slate-400">
-                  {app.type === "quest" ? "#단기협업미션" : "#장기팀원모집"}
-                </p>
+                <p className="text-xs font-black text-slate-400">#미션</p>
                 <h2 className="mt-1 text-lg font-black text-slate-950">
-                  {titleFor(app, quests, alliances)}
+                  {titleFor(app, quests)}
                 </h2>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <InfoBox label="지원자 ID" value={app.applicant_id} />
@@ -77,7 +72,7 @@ function AdminSection({ applications, quests, alliances, onResolve }) {
           <div className="mt-3 space-y-2">
             {others.map((app) => (
               <div key={app.id} className="glass-pill flex items-center justify-between rounded-2xl px-4 py-3">
-                <span className="text-sm font-bold text-slate-700">{titleFor(app, quests, alliances)}</span>
+                <span className="text-sm font-bold text-slate-700">{titleFor(app, quests)}</span>
                 <span className="text-xs font-black text-slate-400">{app.status}</span>
               </div>
             ))}
