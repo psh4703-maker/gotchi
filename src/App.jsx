@@ -893,53 +893,49 @@ function App() {
               );
             })}
 
-            <span className="h-5 w-px bg-slate-300" aria-hidden="true" />
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                className={`flex shrink-0 items-center gap-1 whitespace-nowrap px-1 py-3 text-lg font-medium tracking-tight transition-colors ${
-                  moreTabs.some((tab) => tab.id === activeTab) ? "text-black" : "text-slate-600 hover:text-black"
-                }`}
-              >
-                더보기
-                <span className="text-sm">{isMoreMenuOpen ? "▲" : "▼"}</span>
-              </button>
+            {moreTabs.length > 0 && (
+              <>
+                <span className="h-5 w-px bg-slate-300" aria-hidden="true" />
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+                    className={`flex shrink-0 items-center gap-1 whitespace-nowrap px-1 py-3 text-lg font-medium tracking-tight transition-colors ${
+                      moreTabs.some((tab) => tab.id === activeTab) ? "text-black" : "text-slate-600 hover:text-black"
+                    }`}
+                  >
+                    더보기
+                    <span className="text-sm">{isMoreMenuOpen ? "▲" : "▼"}</span>
+                  </button>
 
-              {isMoreMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-30" onClick={() => setIsMoreMenuOpen(false)} />
-                  <div className="absolute left-1/2 z-40 mt-2 w-52 -translate-x-1/2 overflow-hidden rounded-2xl border border-slate-100 bg-white p-2 shadow-xl shadow-slate-200/60">
-                    {moreTabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveTab(tab.id);
-                          setIsMoreMenuOpen(false);
-                        }}
-                        className={`block w-full rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ${
-                          activeTab === tab.id ? "bg-black text-white" : "text-slate-600 hover:bg-slate-50 hover:text-black"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+                  {isMoreMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-30" onClick={() => setIsMoreMenuOpen(false)} />
+                      <div className="absolute left-1/2 z-40 mt-2 w-52 -translate-x-1/2 overflow-hidden rounded-2xl border border-slate-100 bg-white p-2 shadow-xl shadow-slate-200/60">
+                        {moreTabs.map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(tab.id);
+                              setIsMoreMenuOpen(false);
+                            }}
+                            className={`block w-full rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ${
+                              activeTab === tab.id ? "bg-black text-white" : "text-slate-600 hover:bg-slate-50 hover:text-black"
+                            }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex shrink-0 items-center gap-4 sm:gap-5">
-            <button
-              type="button"
-              onClick={() => requireAuth("create-quest")}
-              className="hidden shrink-0 whitespace-nowrap rounded-full bg-black px-5 py-2.5 text-sm font-black text-white transition-transform hover:scale-105 xl:inline-block"
-            >
-              미션 올리기
-            </button>
-
             {currentUser ? (
               <>
                 <NotificationBell notifications={notifications} onOpenNotification={openNotification} />
