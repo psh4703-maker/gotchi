@@ -849,36 +849,36 @@ function App() {
   return (
     <div className="min-h-screen text-slate-950">
       <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
-        <nav className="mx-auto flex min-h-24 max-w-7xl items-center justify-between gap-6 px-5 py-4 sm:px-8 lg:px-10">
+        <nav className="mx-auto flex min-h-24 max-w-7xl items-center justify-between gap-8 px-5 py-4 sm:px-8 lg:px-10">
           <button
             type="button"
             onClick={() => setActiveTab("home")}
             className="group flex shrink-0 items-center gap-4 text-left"
           >
-            <div className="text-6xl font-black leading-none tracking-[-0.08em] text-black transition-transform duration-200 group-hover:scale-105">
+            <div className="text-[3.35rem] font-black leading-none tracking-[-0.08em] text-black transition-transform duration-200 group-hover:scale-105">
               g
             </div>
             <div className="text-left">
-              <p className="text-lg font-black tracking-tight text-black">
+              <p className="text-base font-black tracking-tight text-black">
                 gotchi
               </p>
-              <p className="hidden text-sm font-medium leading-5 text-slate-600 sm:block">
+              <p className="hidden text-[13px] font-normal leading-5 text-slate-600 sm:block">
                 먼저 일해보고, 팀이 되는 곳
               </p>
             </div>
           </button>
 
-          <div className="hidden flex-1 items-center justify-center gap-7 lg:flex">
+          <div className="hidden flex-1 items-center justify-center gap-8 lg:flex">
             {primaryTabs.map((tab, index) => {
               const isActive = activeTab === tab.id;
 
               return (
                 <span key={tab.id} className="flex shrink-0 items-center">
-                  {index > 0 && <span className="mr-7 h-5 w-px bg-slate-300" aria-hidden="true" />}
+                  {index > 0 && <span className="mr-8 h-4 w-px bg-slate-300" aria-hidden="true" />}
                   <button
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`group relative shrink-0 whitespace-nowrap px-1 py-3 text-lg font-medium uppercase tracking-tight transition-colors ${
+                    className={`group relative shrink-0 whitespace-nowrap px-1 py-3 text-[15px] font-normal uppercase leading-none tracking-normal transition-colors ${
                       isActive ? "text-black" : "text-slate-600 hover:text-black"
                     }`}
                   >
@@ -895,17 +895,17 @@ function App() {
 
             {moreTabs.length > 0 && (
               <>
-                <span className="h-5 w-px bg-slate-300" aria-hidden="true" />
+                <span className="h-4 w-px bg-slate-300" aria-hidden="true" />
                 <div className="relative shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                    className={`flex shrink-0 items-center gap-1 whitespace-nowrap px-1 py-3 text-lg font-medium tracking-tight transition-colors ${
+                    className={`flex shrink-0 items-center gap-1 whitespace-nowrap px-1 py-3 text-[15px] font-normal leading-none tracking-normal transition-colors ${
                       moreTabs.some((tab) => tab.id === activeTab) ? "text-black" : "text-slate-600 hover:text-black"
                     }`}
                   >
                     더보기
-                    <span className="text-sm">{isMoreMenuOpen ? "▲" : "▼"}</span>
+                    <span className="text-xs">{isMoreMenuOpen ? "▲" : "▼"}</span>
                   </button>
 
                   {isMoreMenuOpen && (
@@ -943,15 +943,15 @@ function App() {
                   <Avatar
                     avatarUrl={profile?.avatar_url}
                     name={profile?.display_name || currentUser.email}
-                    size={44}
+                    size={40}
                   />
-                  <span className="hidden max-w-32 truncate text-base font-black text-black sm:inline">
+                  <span className="hidden max-w-32 truncate text-[15px] font-semibold text-black sm:inline">
                     {profile?.display_name || currentUser.email?.split("@")[0]}
                   </span>
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="hidden text-sm font-medium text-slate-500 transition-colors hover:text-black sm:inline"
+                    className="hidden text-[13px] font-normal text-slate-500 transition-colors hover:text-black sm:inline"
                   >
                     로그아웃
                   </button>
