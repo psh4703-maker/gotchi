@@ -85,9 +85,7 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
           />
         </div>
 
-        {spotlightFreelancers.length > 0 && (
-          <TrendingFreelancers freelancers={spotlightFreelancers} onSelectFreelancer={onSelectFreelancer} />
-        )}
+        <TrendingFreelancers freelancers={spotlightFreelancers} onSelectFreelancer={onSelectFreelancer} />
 
         <div className="mt-12 flex items-center justify-between">
           <div className="glass-pill inline-flex w-fit rounded-2xl p-1.5">
@@ -130,6 +128,17 @@ function TrendingFreelancers({ freelancers, onSelectFreelancer }) {
         </button>
       </div>
       <div className="flex gap-5 overflow-x-auto pb-2">
+        {cards.length === 0 && (
+          <div className="flex h-36 min-w-[300px] flex-col justify-between rounded-3xl border border-dashed border-slate-200 bg-white/70 p-5 text-left shadow-[0_20px_45px_-34px_rgba(15,23,42,0.35)] sm:min-w-[420px]">
+            <div>
+              <p className="text-lg font-black text-slate-950">아직 공개된 프리랜서가 없습니다</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+                프로필에서 Freelancer 공개를 켠 실제 사용자만 여기에 표시됩니다.
+              </p>
+            </div>
+            <p className="text-xs font-bold text-slate-400">No sample profiles</p>
+          </div>
+        )}
         {cards.map((person, index) => (
           <button
             key={person.id}
