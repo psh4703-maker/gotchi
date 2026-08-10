@@ -916,8 +916,11 @@ function App() {
         return (
           <HomeSection
             quests={quests}
+            freelancers={freelancers}
+            applications={applications}
             onCreateQuest={() => requireAuth("create-quest")}
             onSelectQuest={openDetail}
+            onSelectFreelancer={(freelancer) => setFreelancerTarget(freelancer)}
           />
         );
       case "freelancer":
