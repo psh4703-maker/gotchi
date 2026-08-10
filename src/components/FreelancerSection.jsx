@@ -81,7 +81,11 @@ function FreelancerCard({ freelancer, onClick }) {
       role="button"
       tabIndex={0}
       onKeyDown={(event) => event.key === "Enter" && onClick?.()}
+<<<<<<< HEAD
       className="lift-card cursor-pointer overflow-hidden rounded-3xl transition hover:-translate-y-1"
+=======
+      className="glass glass-card lift-card cursor-pointer overflow-hidden rounded-3xl hover:border-[#1B1F4D]/20 hover:shadow-[0_16px_36px_-24px_rgba(27,31,77,0.3)]"
+>>>>>>> 09896dcc8537e8a1d0fbfe03191e86a73b1edbfd
     >
       {heroItem ? (
         <div className="aspect-[4/3] w-full overflow-hidden rounded-3xl bg-slate-100">
