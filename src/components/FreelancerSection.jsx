@@ -5,7 +5,7 @@ function FreelancerSection({ freelancers, currentUser, onSelectFreelancer }) {
   const [query, setQuery] = useState("");
   const normalizedQuery = query.trim().toLowerCase();
 
-  const filtered = freelancers
+  const filtered = (freelancers ?? [])
     .filter((f) => f.id !== currentUser?.id)
     .filter((f) => {
       if (!normalizedQuery) return true;
@@ -22,7 +22,7 @@ function FreelancerSection({ freelancers, currentUser, onSelectFreelancer }) {
             포트폴리오로 먼저 찾아보세요
           </h1>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            작업물을 공개한 사람들이에요. 마음에 들면 바로 미션을 제안할 수 있어요.
+            작업물을 공개한 사람들을 둘러보고, 마음에 들면 바로 미션을 제안할 수 있어요.
           </p>
         </div>
 
@@ -50,10 +50,10 @@ function FreelancerSection({ freelancers, currentUser, onSelectFreelancer }) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="glass rounded-3xl border-dashed p-10 text-center">
+          <div className="glass empty-breathe rounded-3xl border-dashed p-10 text-center">
             <h2 className="text-2xl font-black text-slate-950">아직 등록된 프리랜서가 없습니다</h2>
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              프로필 수정에서 Freelancer 탭 공개를 켜면 여기에 나타나요.
+              프로필 수정에서 Freelancer 공개를 켜면 여기에 표시돼요.
             </p>
           </div>
         ) : (
@@ -81,7 +81,7 @@ function FreelancerCard({ freelancer, onClick }) {
       role="button"
       tabIndex={0}
       onKeyDown={(event) => event.key === "Enter" && onClick?.()}
-      className="glass glass-card cursor-pointer overflow-hidden rounded-3xl hover:border-[#1B1F4D]/20 hover:shadow-[0_16px_36px_-24px_rgba(27,31,77,0.3)]"
+      className="glass glass-card lift-card cursor-pointer overflow-hidden rounded-3xl hover:border-[#1B1F4D]/20 hover:shadow-[0_16px_36px_-24px_rgba(27,31,77,0.3)]"
     >
       {thumbnails.length > 0 ? (
         <div className="grid h-36 grid-cols-3 gap-0.5 bg-slate-100">
