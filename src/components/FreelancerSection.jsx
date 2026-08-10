@@ -26,12 +26,26 @@ function FreelancerSection({ freelancers, currentUser, onSelectFreelancer }) {
           </p>
         </div>
 
-        <div className="glass mb-6 flex items-center rounded-2xl p-2">
+        <div className="relative mb-6">
+          <svg
+            className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="이름, 역할, 역량으로 검색"
-            className="glass-pill w-full rounded-xl px-4 py-2 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
+            className="w-full rounded-full border border-slate-200/80 bg-white py-3.5 pl-12 pr-5 text-sm text-slate-800 shadow-[0_12px_28px_-14px_rgba(27,31,77,0.25)] outline-none transition focus:border-[#1B1F4D]/30 focus:shadow-[0_16px_32px_-14px_rgba(27,31,77,0.35)] focus:ring-4 focus:ring-[#1B1F4D]/10"
           />
         </div>
 
