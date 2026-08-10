@@ -14,9 +14,18 @@ const SKILL_OPTIONS = [
   "영업 경험자",
 ];
 
-const QUICK_PORTFOLIO_TYPES = ["웹사이트", "앱", "브랜딩", "Figma", "GitHub", "Notion", "Behance", "기타"];
+const PORTFOLIO_TYPES = ["웹사이트", "앱", "브랜딩", "Figma", "GitHub", "Notion", "Behance", "이미지 작업물", "기타"];
 
-function EditProfileModal({ user, profile, portfolioItems, onSubmit, onClose, onDeleteAccount, onAddPortfolioItem, onDeletePortfolioItem }) {
+function EditProfileModal({
+  user,
+  profile,
+  portfolioItems,
+  onSubmit,
+  onClose,
+  onDeleteAccount,
+  onAddPortfolioItem,
+  onDeletePortfolioItem,
+}) {
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [role, setRole] = useState(profile?.role || "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
@@ -24,6 +33,7 @@ function EditProfileModal({ user, profile, portfolioItems, onSubmit, onClose, on
   const [bio, setBio] = useState(profile?.bio || "");
   const [skills, setSkills] = useState(profile?.skills || []);
   const [desiredTerms, setDesiredTerms] = useState(profile?.desired_terms || "");
+  const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -130,10 +140,9 @@ function EditProfileModal({ user, profile, portfolioItems, onSubmit, onClose, on
                 />
               </label>
 
-              <PortfolioManager
+              <PortfolioLauncher
                 items={portfolioItems ?? []}
-                userId={user.id}
-                onAdd={onAddPortfolioItem}
+                onOpen={() => setIsPortfolioOpen(true)}
                 onDelete={onDeletePortfolioItem}
               />
             </div>
@@ -190,19 +199,88 @@ function EditProfileModal({ user, profile, portfolioItems, onSubmit, onClose, on
           )}
         </div>
       </form>
+
+      {isPortfolioOpen && (
+        <PortfolioUploadPanel
+          userId={user.id}
+          onAdd={onAddPortfolioItem}
+          onClose={() => setIsPortfolioOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
-function PortfolioManager({ items, userId, onAdd, onDelete }) {
+function PortfolioLauncher({ items, onOpen, onDelete }) {
+  const previewItems = items.slice(0, 3);
+
+  return (
+    <div className="rounded-3xl bg-slate-50 p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-black text-slate-800">포트폴리오</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            사진, 작업물 링크, GitHub, Figma를 따로 올릴 수 있어요.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="magnetic-button rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white transition hover:bg-[#1B1F4D]"
+        >
+          포트폴리오 올리기
+        </button>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-sm font-bold text-slate-400">
+          아직 등록한 작업물이 없습니다
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-2">
+          {previewItems.map((item) => (
+            <div key={item.id} className="portfolio-row flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3">
+              <div className="flex min-w-0 items-center gap-3">
+                {item.image_url ? (
+                  <img src={item.image_url} alt={item.title} className="h-11 w-11 rounded-xl object-cover" />
+                ) : (
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-xs font-black text-slate-400">
+                    link
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-slate-800">{item.title}</p>
+                  {item.link && <p className="truncate text-xs text-slate-400">{item.link}</p>}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onDelete(item.id)}
+                className="shrink-0 rounded-full px-2 py-1 text-xs font-black text-slate-400 transition hover:bg-red-50 hover:text-[#ff3b30]"
+              >
+                삭제
+              </button>
+            </div>
+          ))}
+          {items.length > previewItems.length && (
+            <p className="px-1 text-xs font-bold text-slate-400">외 {items.length - previewItems.length}개 더 등록됨</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PortfolioUploadPanel({ userId, onAdd, onClose }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [selectedType, setSelectedType] = useState(QUICK_PORTFOLIO_TYPES[0]);
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState(PORTFOLIO_TYPES[0]);
   const [isUploading, setIsUploading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+
+  const canSubmit = title.trim() || link.trim() || imageUrl;
 
   const handleImageChange = async (event) => {
     const file = event.target.files?.[0];
@@ -216,61 +294,45 @@ function PortfolioManager({ items, userId, onAdd, onDelete }) {
     if (!error) {
       const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
       setImageUrl(data.publicUrl);
+      if (!title.trim()) setTitle(file.name.replace(/\.[^/.]+$/, ""));
     }
     setIsUploading(false);
   };
 
   const submitItem = async () => {
-    const safeTitle = title.trim() || selectedType;
-    if (!safeTitle || !link.trim()) return;
+    if (!canSubmit) return;
 
     setIsAdding(true);
-    await onAdd({ title: safeTitle, description, link, imageUrl });
-    setTitle("");
-    setDescription("");
-    setLink("");
-    setImageUrl("");
-    setSelectedType(QUICK_PORTFOLIO_TYPES[0]);
-    setIsAdvancedOpen(false);
+    await onAdd({
+      title: title.trim() || selectedType,
+      description,
+      link,
+      imageUrl,
+    });
     setIsAdding(false);
+    onClose();
   };
 
   return (
-    <div className="rounded-3xl bg-slate-50 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-black text-slate-800">포트폴리오</p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">링크 하나만 붙여도 등록돼요. 제목과 이미지는 나중에 채워도 괜찮아요.</p>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 px-4 py-8 backdrop-blur-md">
+      <div className="glass-strong modal-pop w-full max-w-lg rounded-[28px] p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-black text-[#1B1F4D]">Portfolio upload</p>
+            <h3 className="mt-2 text-2xl font-black text-slate-950">포트폴리오 올리기</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-500">사진만 올려도 되고, 작업 링크만 붙여도 돼요.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 transition hover:bg-slate-200"
+          >
+            x
+          </button>
         </div>
-        <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-[#1B1F4D] shadow-sm">
-          {items.length}개
-        </span>
-      </div>
 
-      {items.length > 0 && (
-        <div className="mt-3 grid gap-2">
-          {items.map((item) => (
-            <div key={item.id} className="portfolio-row flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-slate-800">{item.title}</p>
-                {item.link && <p className="truncate text-xs text-slate-400">{item.link}</p>}
-              </div>
-              <button
-                type="button"
-                onClick={() => onDelete(item.id)}
-                className="shrink-0 rounded-full px-2 py-1 text-xs font-black text-slate-400 transition hover:bg-red-50 hover:text-[#ff3b30]"
-              >
-                삭제
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-3">
-        <p className="px-1 text-xs font-black uppercase tracking-wide text-slate-400">Quick add</p>
-        <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-          {QUICK_PORTFOLIO_TYPES.map((type) => (
+        <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+          {PORTFOLIO_TYPES.map((type) => (
             <button
               key={type}
               type="button"
@@ -284,49 +346,48 @@ function PortfolioManager({ items, userId, onAdd, onDelete }) {
           ))}
         </div>
 
-        <input
-          value={link}
-          onChange={(event) => setLink(event.target.value)}
-          placeholder="작업 링크 붙여넣기"
-          className="mt-3 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-[#1B1F4D]/30 focus:bg-white focus:ring-4 focus:ring-[#1B1F4D]/10"
-        />
+        <label className="mt-4 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center transition hover:border-[#1B1F4D]/40 hover:bg-white">
+          {imageUrl ? (
+            <img src={imageUrl} alt="업로드한 작업물" className="max-h-44 rounded-2xl object-cover shadow-sm" />
+          ) : (
+            <>
+              <span className="text-3xl">+</span>
+              <span className="mt-2 text-sm font-black text-slate-800">{isUploading ? "이미지 업로드 중..." : "사진 또는 작업물 이미지 올리기"}</span>
+              <span className="mt-1 text-xs text-slate-400">클릭해서 파일 선택</span>
+            </>
+          )}
+          <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+        </label>
 
-        <button
-          type="button"
-          onClick={() => setIsAdvancedOpen((prev) => !prev)}
-          className="mt-3 text-xs font-black text-slate-400 transition hover:text-[#1B1F4D]"
-        >
-          {isAdvancedOpen ? "간단 입력으로 접기" : "제목/설명/이미지 추가하기"}
-        </button>
-
-        {isAdvancedOpen && (
-          <div className="profile-reveal mt-3 space-y-2">
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="작업물 제목"
-              className="glass-pill w-full rounded-xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
-            />
-            <input
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="짧은 설명"
-              className="glass-pill w-full rounded-xl px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
-            />
-            <label className="inline-flex cursor-pointer items-center rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-600 transition hover:bg-slate-200">
-              {isUploading ? "업로드 중..." : imageUrl ? "이미지 선택됨" : "이미지 추가"}
-              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-            </label>
-          </div>
-        )}
+        <div className="mt-4 space-y-3">
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="작업물 제목"
+            className="glass-pill w-full rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
+          />
+          <input
+            value={link}
+            onChange={(event) => setLink(event.target.value)}
+            placeholder="작업 링크, GitHub, Figma, Notion 등"
+            className="glass-pill w-full rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
+          />
+          <textarea
+            rows={3}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="짧은 설명"
+            className="glass-pill w-full resize-none rounded-2xl px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
+          />
+        </div>
 
         <button
           type="button"
           onClick={submitItem}
-          disabled={isAdding || !link.trim()}
-          className="magnetic-button mt-3 w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-[#1B1F4D] disabled:opacity-40"
+          disabled={isAdding || isUploading || !canSubmit}
+          className="magnetic-button mt-5 w-full rounded-2xl bg-[#1B1F4D] px-5 py-3 text-sm font-black text-white transition hover:bg-[#262B63] disabled:opacity-40"
         >
-          {isAdding ? "추가 중..." : "포트폴리오 추가"}
+          {isAdding ? "올리는 중..." : "작업물 등록하기"}
         </button>
       </div>
     </div>
