@@ -1,30 +1,6 @@
 import { useMemo, useState } from "react";
 import Avatar from "./Avatar";
 
-const FALLBACK_TALENTS = [
-  {
-    id: "fallback-design",
-    display_name: "민서",
-    role: "Product Designer",
-    bio: "랜딩페이지와 프로토타입을 빠르게 정리하는 디자이너",
-    skills: ["Figma", "UX 설계", "브랜딩"],
-  },
-  {
-    id: "fallback-dev",
-    display_name: "도윤",
-    role: "Frontend Developer",
-    bio: "React 기반 MVP 구현과 Supabase 연동에 익숙합니다",
-    skills: ["React", "Tailwind", "Supabase"],
-  },
-  {
-    id: "fallback-growth",
-    display_name: "서연",
-    role: "Growth Marketer",
-    bio: "초기 고객 인터뷰와 콘텐츠 실험을 설계합니다",
-    skills: ["콘텐츠", "SEO", "고객 인터뷰"],
-  },
-];
-
 const TOPIC_STYLES = [
   "from-[#ff3b12] to-[#ff5f2f]",
   "from-slate-950 to-slate-700",
@@ -39,10 +15,10 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
   const [viewMode, setViewMode] = useState("projects");
 
   const normalizedQuery = query.trim().toLowerCase();
-  const spotlightFreelancers = (freelancers?.length ? freelancers : FALLBACK_TALENTS).slice(0, 8);
+  const spotlightFreelancers = (freelancers ?? []).slice(0, 8);
 
   const filteredQuests = useMemo(() => {
-    return quests
+    return (quests ?? [])
       .slice()
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .filter((quest) => {
@@ -69,7 +45,7 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
         <div className="mb-10 flex flex-col items-center text-center">
           <p className="mb-3 text-sm font-bold text-[#1B1F4D]">Real founder matching</p>
           <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-            먼저 일해보고, 나중에 동행하세요
+            먼저 일해보고, 팀이 되는 곳
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
             단기 미션, 프리랜서 탐색, 정식 팀 빌딩까지 한 화면에서 시작하세요.
@@ -109,7 +85,9 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
           />
         </div>
 
-        <TrendingFreelancers freelancers={spotlightFreelancers} onSelectFreelancer={onSelectFreelancer} />
+        {spotlightFreelancers.length > 0 && (
+          <TrendingFreelancers freelancers={spotlightFreelancers} onSelectFreelancer={onSelectFreelancer} />
+        )}
 
         <div className="mt-12 flex items-center justify-between">
           <div className="glass-pill inline-flex w-fit rounded-2xl p-1.5">
@@ -146,7 +124,7 @@ function TrendingFreelancers({ freelancers, onSelectFreelancer }) {
   return (
     <section>
       <div className="mb-5 flex items-center justify-between">
-        <p className="text-xs font-black uppercase tracking-wide text-slate-500">Trending freelancers ↗</p>
+        <p className="text-xs font-black uppercase tracking-wide text-slate-500">Trending freelancers</p>
         <button type="button" className="text-sm font-bold text-slate-500 hover:text-slate-950">
           View community
         </button>
@@ -170,7 +148,7 @@ function TrendingFreelancers({ freelancers, onSelectFreelancer }) {
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-lg font-black">{person.skills?.length || 3}</p>
+                  <p className="text-lg font-black">{person.skills?.length ?? 0}</p>
                   <p className="text-xs font-semibold text-white/70">Skills</p>
                 </div>
                 <AvatarStack people={[person, ...cards.filter((item) => item.id !== person.id).slice(0, 2)]} />
@@ -185,7 +163,7 @@ function TrendingFreelancers({ freelancers, onSelectFreelancer }) {
 
 function MissionFeed({ quests, allQuests, applications, freelancers, hasMore, onMore, onSelectQuest }) {
   if (allQuests.length === 0) {
-    return <EmptyState title="아직 올라온 미션이 없습니다" description="첫 미션을 올려 gotchi를 시작해보세요." />;
+    return <EmptyState title="아직 올라온 미션이 없습니다" description="첫 미션이 올라오면 이곳에 표시됩니다." />;
   }
 
   return (
@@ -193,7 +171,7 @@ function MissionFeed({ quests, allQuests, applications, freelancers, hasMore, on
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-950">지금 구하고 있는 미션</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">지원자 흐름과 필요한 역량을 한눈에 보고 바로 참여하세요.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-500">실제 등록된 미션만 보여줍니다.</p>
         </div>
         <button type="button" className="hidden text-sm font-bold text-slate-500 hover:text-slate-950 sm:block">
           View more
@@ -201,12 +179,11 @@ function MissionFeed({ quests, allQuests, applications, freelancers, hasMore, on
       </div>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {quests.map((quest, index) => (
+        {quests.map((quest) => (
           <QuestCard
             key={quest.id}
             quest={quest}
-            index={index}
-            applicants={resolveApplicants(quest, applications, freelancers, index)}
+            applicants={resolveApplicants(quest, applications, freelancers)}
             onClick={() => onSelectQuest?.(quest)}
           />
         ))}
@@ -228,11 +205,22 @@ function MissionFeed({ quests, allQuests, applications, freelancers, hasMore, on
 }
 
 function PeoplePreview({ freelancers, onSelectFreelancer }) {
+  if (freelancers.length === 0) {
+    return (
+      <section className="mt-12">
+        <EmptyState
+          title="아직 공개된 프리랜서가 없습니다"
+          description="프로필에서 Freelancer 공개를 켠 사용자가 생기면 이곳에 표시됩니다."
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="mt-12">
       <div className="mb-5">
         <h2 className="text-2xl font-black tracking-tight text-slate-950">요즘 뜨는 프리랜서</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-500">작업물과 역할을 보고 먼저 미션을 제안해보세요.</p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">공개 프로필을 켠 실제 사용자만 보여줍니다.</p>
       </div>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {freelancers.map((person) => (
@@ -249,7 +237,7 @@ function PeoplePreview({ freelancers, onSelectFreelancer }) {
                 <p className="text-xs text-slate-500">{person.role}</p>
               </div>
             </div>
-            <p className="mt-4 line-clamp-2 text-sm leading-6 text-slate-600">{person.bio || "첫 미션으로 협업 핏을 확인해보세요."}</p>
+            <p className="mt-4 line-clamp-2 text-sm leading-6 text-slate-600">{person.bio || "소개가 아직 없습니다."}</p>
             <TagList tags={person.skills?.slice(0, 4)} />
           </button>
         ))}
@@ -258,7 +246,7 @@ function PeoplePreview({ freelancers, onSelectFreelancer }) {
   );
 }
 
-function QuestCard({ quest, applicants, index, onClick }) {
+function QuestCard({ quest, applicants, onClick }) {
   return (
     <article
       onClick={onClick}
@@ -278,24 +266,32 @@ function QuestCard({ quest, applicants, index, onClick }) {
       <p className="mt-4 line-clamp-3 text-sm leading-7 text-slate-600">{quest.mission}</p>
 
       <div className="mt-6 space-y-2 text-sm text-slate-600">
-        <p><strong className="text-slate-950">기간:</strong> {quest.period}</p>
-        <p><strong className="text-slate-950">보상:</strong> {quest.reward}</p>
+        <p>
+          <strong className="text-slate-950">기간:</strong> {quest.period}
+        </p>
+        <p>
+          <strong className="text-slate-950">보상:</strong> {quest.reward}
+        </p>
       </div>
 
       <TagList tags={quest.skills} />
 
       <div className="mt-auto flex items-end justify-between gap-4 pt-6">
         <div>
-          <p className="text-xs font-bold text-slate-400">지원 관심도</p>
-          <p className="mt-1 text-sm font-black text-slate-800">{applicants.count}명 지원 중</p>
+          <p className="text-xs font-bold text-slate-400">현재 지원</p>
+          <p className="mt-1 text-sm font-black text-slate-800">
+            {applicants.count > 0 ? `${applicants.count}명 지원 중` : "아직 지원 없음"}
+          </p>
         </div>
-        <AvatarStack people={applicants.people} overflow={Math.max(applicants.count - applicants.people.length, 0)} seed={index} />
+        {applicants.count > 0 && (
+          <AvatarStack people={applicants.people} overflow={Math.max(applicants.count - applicants.people.length, 0)} />
+        )}
       </div>
     </article>
   );
 }
 
-function AvatarStack({ people, overflow = 0, seed = 0 }) {
+function AvatarStack({ people, overflow = 0 }) {
   const visible = people.slice(0, 4);
 
   return (
@@ -308,11 +304,6 @@ function AvatarStack({ people, overflow = 0, seed = 0 }) {
       {overflow > 0 && (
         <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-white bg-slate-950 text-[11px] font-black text-white shadow-sm">
           +{overflow}
-        </div>
-      )}
-      {visible.length === 0 && (
-        <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-white bg-slate-100 text-xs font-black text-slate-500">
-          {seed + 1}
         </div>
       )}
     </div>
@@ -333,24 +324,14 @@ function SegmentButton({ active, onClick, children }) {
   );
 }
 
-function resolveApplicants(quest, applications = [], freelancers = [], seed = 0) {
+function resolveApplicants(quest, applications = [], freelancers = []) {
   const realApps = applications.filter((app) => app.quest_id === quest.id);
   const realPeople = realApps.map((app) => {
     const profile = freelancers.find((person) => person.id === app.applicant_id);
     return profile ?? { id: app.applicant_id, display_name: "지원자" };
   });
 
-  if (realPeople.length > 0) {
-    return { count: realPeople.length, people: realPeople };
-  }
-
-  const fallbackCount = Math.min(7, Math.max(2, ((quest.title?.length ?? 0) + seed) % 6 + 2));
-  const fallbackPeople = FALLBACK_TALENTS.slice(0, Math.min(3, fallbackCount)).map((person, index) => ({
-    ...person,
-    id: `${quest.id}-${person.id}-${index}`,
-  }));
-
-  return { count: fallbackCount, people: fallbackPeople };
+  return { count: realPeople.length, people: realPeople };
 }
 
 function TagList({ tags }) {

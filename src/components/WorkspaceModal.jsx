@@ -337,7 +337,7 @@ function WorkspaceModal({
                           rows={2}
                           value={paymentNote}
                           onChange={(event) => setPaymentNote(event.target.value)}
-                          placeholder="예: 카카오뱅크 3333-01-1234567 예금주 김도윤"
+                          placeholder="계좌번호 또는 지급 방식 메모"
                           className="w-full resize-none rounded-2xl bg-white/70 px-4 py-3 text-sm outline-none focus:ring-4 focus:ring-[#1B1F4D]/15"
                         />
                         <button
