@@ -1,16 +1,6 @@
 import { useMemo, useState } from "react";
 import Avatar from "./Avatar";
 
-const CATEGORIES = [
-  "Featured",
-  "Web developers",
-  "Content creators",
-  "Graphic designers",
-  "Product designers",
-  "AI developers",
-  "Social media marketers",
-];
-
 const FALLBACK_TALENTS = [
   {
     id: "fallback-design",
@@ -47,7 +37,6 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(6);
   const [viewMode, setViewMode] = useState("projects");
-  const [category, setCategory] = useState("Featured");
 
   const normalizedQuery = query.trim().toLowerCase();
   const spotlightFreelancers = (freelancers?.length ? freelancers : FALLBACK_TALENTS).slice(0, 8);
@@ -122,7 +111,7 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
 
         <TrendingFreelancers freelancers={spotlightFreelancers} onSelectFreelancer={onSelectFreelancer} />
 
-        <div className="mt-12 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mt-12 flex items-center justify-between">
           <div className="glass-pill inline-flex w-fit rounded-2xl p-1.5">
             <SegmentButton active={viewMode === "projects"} onClick={() => setViewMode("projects")}>
               Projects
@@ -130,21 +119,6 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
             <SegmentButton active={viewMode === "people"} onClick={() => setViewMode("people")}>
               People
             </SegmentButton>
-          </div>
-
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {CATEGORIES.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setCategory(item)}
-                className={`shrink-0 rounded-full px-5 py-3 text-sm font-bold transition ${
-                  category === item ? "bg-slate-100 text-slate-950" : "text-slate-400 hover:bg-slate-50 hover:text-slate-700"
-                }`}
-              >
-                {item}
-              </button>
-            ))}
           </div>
         </div>
 
