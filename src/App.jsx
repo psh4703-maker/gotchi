@@ -19,12 +19,12 @@ import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
   { id: "home", label: "Home" },
-  { id: "freelancer", label: "Freelancer" },
   { id: "workspace", label: "Workspace" },
+  { id: "freelancer", label: "Freelancer" },
   { id: "portfolio", label: "My Portfolio" },
 ];
 
-const PRIMARY_TAB_IDS = ["home", "freelancer", "workspace", "portfolio"];
+const PRIMARY_TAB_IDS = ["home", "workspace", "freelancer", "portfolio"];
 
 const SKILL_OPTIONS = [
   "기획력",
@@ -979,104 +979,110 @@ function App() {
 
   return (
     <div className="min-h-screen text-slate-950">
-      <header className="sticky top-0 z-40 bg-white">
-        <nav className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
+        <nav className="mx-auto flex min-h-24 max-w-7xl items-center justify-between gap-10 px-5 py-4 sm:px-8 lg:px-10">
           <button
             type="button"
             onClick={() => setActiveTab("home")}
-            className="flex shrink-0 items-center gap-3"
+            className="group flex shrink-0 items-center gap-4 text-left"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-lg font-black text-white shadow-[0_1px_0_rgba(255,255,255,0.35)_inset]">
+            <div className="text-[3.35rem] font-black leading-none tracking-[-0.08em] text-black transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.035]">
               g
             </div>
-            <div className="hidden text-left sm:block">
-              <p className="text-base font-black tracking-tight text-slate-950">
+            <div className="text-left">
+              <p className="text-base font-black tracking-tight text-black">
                 gotchi
               </p>
-              <p className="text-xs font-medium text-slate-500">
+              <p className="hidden text-[13px] font-normal leading-5 text-slate-600 sm:block">
                 먼저 일해보고, 팀이 되는 곳
               </p>
             </div>
           </button>
 
-          <div className="flex flex-1 items-center justify-center gap-2 overflow-x-auto">
+          <div className="hidden flex-1 items-center justify-center gap-8 lg:flex">
             {primaryTabs.map((tab, index) => {
               const isActive = activeTab === tab.id;
 
               return (
                 <span key={tab.id} className="flex shrink-0 items-center">
-                  {index > 0 && <span className="mx-2 text-xs font-medium text-slate-300">|</span>}
+                  {index > 0 && <span className="mr-8 h-4 w-px bg-slate-300/80" aria-hidden="true" />}
                   <button
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative shrink-0 whitespace-nowrap px-1 pb-1 text-xs font-black uppercase tracking-wide transition-colors ${
-                      isActive ? "text-[#1B1F4D]" : "text-slate-400 hover:text-slate-700"
+                    className={`group relative shrink-0 whitespace-nowrap px-1 py-3 text-[15px] font-normal uppercase leading-none tracking-normal transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${
+                      isActive ? "text-black" : "text-slate-600 hover:text-black"
                     }`}
                   >
                     {tab.label}
-                    {isActive && (
-                      <span className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-[#1B1F4D]" />
-                    )}
+                    <span
+                      className={`absolute inset-x-0 -bottom-0.5 mx-auto h-px rounded-full bg-black transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        isActive ? "w-full opacity-100" : "w-0 opacity-0 group-hover:w-full group-hover:opacity-100"
+                      }`}
+                    />
                   </button>
                 </span>
               );
             })}
 
-            <span className="mx-2 text-xs font-medium text-slate-300">|</span>
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                className={`flex shrink-0 items-center gap-1 whitespace-nowrap px-1 text-xs font-black uppercase tracking-wide transition-colors ${
-                  moreTabs.some((tab) => tab.id === activeTab) ? "text-[#1B1F4D]" : "text-slate-400 hover:text-slate-700"
-                }`}
-              >
-                더보기
-                <span className="text-[10px]">{isMoreMenuOpen ? "▲" : "▼"}</span>
-              </button>
+            {moreTabs.length > 0 && (
+              <>
+                <span className="h-4 w-px bg-slate-300/80" aria-hidden="true" />
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+                    className={`flex shrink-0 items-center gap-1 whitespace-nowrap px-1 py-3 text-[15px] font-normal leading-none tracking-normal transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${
+                      moreTabs.some((tab) => tab.id === activeTab) ? "text-black" : "text-slate-600 hover:text-black"
+                    }`}
+                  >
+                    더보기
+                    <span className={`text-xs transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isMoreMenuOpen ? "rotate-180" : ""}`}>▼</span>
+                  </button>
 
-              {isMoreMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-30" onClick={() => setIsMoreMenuOpen(false)} />
-                  <div className="glass-strong absolute left-1/2 z-40 mt-3 w-44 -translate-x-1/2 overflow-hidden rounded-2xl p-1.5">
-                    {moreTabs.map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveTab(tab.id);
-                          setIsMoreMenuOpen(false);
-                        }}
-                        className={`block w-full rounded-xl px-3 py-2 text-left text-sm font-bold transition ${
-                          activeTab === tab.id ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-white/70"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+                  {isMoreMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-30" onClick={() => setIsMoreMenuOpen(false)} />
+                      <div className="absolute left-1/2 z-40 mt-2 w-52 -translate-x-1/2 animate-[menuFloat_260ms_cubic-bezier(0.22,1,0.36,1)] overflow-hidden rounded-2xl border border-slate-100 bg-white p-2 shadow-xl shadow-slate-200/60">
+                        {moreTabs.map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(tab.id);
+                              setIsMoreMenuOpen(false);
+                            }}
+                            className={`block w-full rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ${
+                              activeTab === tab.id ? "bg-black text-white" : "text-slate-600 hover:bg-slate-50 hover:text-black"
+                            }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-4 sm:gap-5">
             {currentUser ? (
               <>
                 <NotificationBell notifications={notifications} onOpenNotification={openNotification} />
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Avatar
                     avatarUrl={profile?.avatar_url}
                     name={profile?.display_name || currentUser.email}
-                    size={30}
+                    size={40}
                   />
-                  <span className="hidden text-sm font-bold text-slate-700 sm:inline">
-                    {profile?.display_name || currentUser.email}
+                  <span className="hidden max-w-32 truncate text-[15px] font-semibold text-black sm:inline">
+                    {profile?.display_name || currentUser.email?.split("@")[0]}
                   </span>
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="hidden text-xs font-black text-slate-400 hover:text-slate-900 sm:inline"
+                    className="hidden text-[13px] font-normal text-slate-500 transition-colors hover:text-black sm:inline"
                   >
                     로그아웃
                   </button>
@@ -1089,7 +1095,7 @@ function App() {
                   setAuthMode("sign-in");
                   setIsAuthOpen(true);
                 }}
-                className="whitespace-nowrap text-sm font-black text-slate-700 hover:text-slate-900"
+                className="whitespace-nowrap rounded-full bg-black px-5 py-2.5 text-sm font-black text-white transition-transform hover:scale-105"
               >
                 로그인
               </button>

@@ -67,3 +67,15 @@ textarea {
   border-color: #d3d6e6;
 }
 
+@keyframes menuFloat {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
