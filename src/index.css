@@ -67,6 +67,49 @@ textarea {
   border-color: #d3d6e6;
 }
 
+.modal-pop {
+  animation: modalPop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.profile-reveal {
+  animation: revealUp 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lift-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.lift-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: linear-gradient(135deg, rgba(27, 31, 77, 0.08), rgba(0, 174, 255, 0.08));
+  transition: opacity 0.25s ease;
+}
+
+.lift-card:hover::after {
+  opacity: 1;
+}
+
+.magnetic-button {
+  transform: translateZ(0);
+}
+
+.magnetic-button:hover {
+  transform: translateY(-1px) scale(1.01);
+}
+
+.portfolio-row {
+  animation: revealUp 0.22s ease both;
+}
+
+.empty-breathe {
+  animation: breathe 2.8s ease-in-out infinite;
+}
+
 @keyframes menuFloat {
   from {
     opacity: 0;
@@ -76,6 +119,52 @@ textarea {
   to {
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 1px 2px rgba(20, 22, 43, 0.04);
+  }
+
+  50% {
+    box-shadow: 0 14px 34px -28px rgba(27, 31, 77, 0.42);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

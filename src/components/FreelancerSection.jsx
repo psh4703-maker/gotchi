@@ -5,7 +5,7 @@ function FreelancerSection({ freelancers, currentUser, onSelectFreelancer }) {
   const [query, setQuery] = useState("");
   const normalizedQuery = query.trim().toLowerCase();
 
-  const filtered = freelancers
+  const filtered = (freelancers ?? [])
     .filter((f) => f.id !== currentUser?.id)
     .filter((f) => {
       if (!normalizedQuery) return true;
@@ -22,7 +22,7 @@ function FreelancerSection({ freelancers, currentUser, onSelectFreelancer }) {
             포트폴리오로 먼저 찾아보세요
           </h1>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            작업물을 공개한 사람들이에요. 마음에 들면 바로 미션을 제안할 수 있어요.
+            작업물을 공개한 사람들을 둘러보고, 마음에 들면 바로 미션을 제안할 수 있어요.
           </p>
         </div>
 
@@ -50,10 +50,10 @@ function FreelancerSection({ freelancers, currentUser, onSelectFreelancer }) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="glass rounded-3xl border-dashed p-10 text-center">
+          <div className="glass empty-breathe rounded-3xl border-dashed p-10 text-center">
             <h2 className="text-2xl font-black text-slate-950">아직 등록된 프리랜서가 없습니다</h2>
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              프로필 수정에서 Freelancer 탭 공개를 켜면 여기에 나타나요.
+              프로필 수정에서 Freelancer 공개를 켜면 여기에 표시돼요.
             </p>
           </div>
         ) : (
@@ -73,7 +73,7 @@ function FreelancerSection({ freelancers, currentUser, onSelectFreelancer }) {
 }
 
 function FreelancerCard({ freelancer, onClick }) {
-  const thumbnails = (freelancer.portfolio ?? []).filter((item) => item.image_url).slice(0, 3);
+  const heroItem = (freelancer.portfolio ?? []).find((item) => item.image_url);
 
   return (
     <article
@@ -81,39 +81,26 @@ function FreelancerCard({ freelancer, onClick }) {
       role="button"
       tabIndex={0}
       onKeyDown={(event) => event.key === "Enter" && onClick?.()}
-      className="glass glass-card cursor-pointer overflow-hidden rounded-3xl hover:border-[#1B1F4D]/20 hover:shadow-[0_16px_36px_-24px_rgba(27,31,77,0.3)]"
+      className="lift-card cursor-pointer overflow-hidden rounded-3xl transition hover:-translate-y-1"
     >
-      {thumbnails.length > 0 ? (
-        <div className="grid h-36 grid-cols-3 gap-0.5 bg-slate-100">
-          {thumbnails.map((item) => (
-            <img key={item.id} src={item.image_url} alt={item.title} className="h-full w-full object-cover" />
-          ))}
+      {heroItem ? (
+        <div className="aspect-[4/3] w-full overflow-hidden rounded-3xl bg-slate-100">
+          <img src={heroItem.image_url} alt={heroItem.title} className="h-full w-full object-cover" />
         </div>
       ) : (
-        <div className="flex h-36 items-center justify-center bg-slate-50">
-          <Avatar avatarUrl={freelancer.avatar_url} name={freelancer.display_name} size={56} />
+        <div className="glass flex aspect-[4/3] w-full items-center justify-center rounded-3xl">
+          <Avatar avatarUrl={freelancer.avatar_url} name={freelancer.display_name} size={64} />
         </div>
       )}
 
-      <div className="p-6">
-        <div className="flex items-center gap-3">
-          <Avatar avatarUrl={freelancer.avatar_url} name={freelancer.display_name} size={36} />
-          <div>
-            <p className="text-base font-black text-slate-950">{freelancer.display_name}</p>
-            <p className="text-xs text-slate-500">{freelancer.role}</p>
-          </div>
-        </div>
-        {freelancer.bio && (
-          <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{freelancer.bio}</p>
-        )}
-        {freelancer.skills?.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {freelancer.skills.slice(0, 4).map((skill) => (
-              <span key={skill} className="glass-pill rounded-full px-3 py-1 text-xs font-semibold text-slate-600">
-                {skill}
-              </span>
-            ))}
-          </div>
+      <div className="mt-3 flex items-center gap-2 px-1">
+        <Avatar avatarUrl={freelancer.avatar_url} name={freelancer.display_name} size={26} />
+        <p className="truncate text-sm font-black text-slate-950">{freelancer.display_name}</p>
+        {freelancer.role && (
+          <>
+            <span className="text-slate-300">·</span>
+            <p className="truncate text-sm font-semibold text-slate-500">{freelancer.role}</p>
+          </>
         )}
       </div>
     </article>

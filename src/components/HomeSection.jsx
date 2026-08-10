@@ -9,7 +9,7 @@ const TOPIC_STYLES = [
   "from-[#101827] to-[#2d3748]",
 ];
 
-function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelectQuest, onSelectFreelancer }) {
+function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelectQuest, onSelectFreelancer, onOpenPortfolioUpload }) {
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(6);
   const [viewMode, setViewMode] = useState("projects");
@@ -50,13 +50,22 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
             단기 미션, 프리랜서 탐색, 정식 팀 빌딩까지 한 화면에서 시작하세요.
           </p>
-          <button
-            type="button"
-            onClick={onCreateQuest}
-            className="mt-7 rounded-2xl bg-[#1B1F4D] px-6 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63] active:scale-[0.98]"
-          >
-            미션 올리기
-          </button>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={onCreateQuest}
+              className="rounded-2xl bg-[#1B1F4D] px-6 py-3 text-sm font-black text-white shadow-[0_14px_24px_-10px_rgba(27,31,77,0.45)] transition hover:bg-[#262B63] active:scale-[0.98]"
+            >
+              미션 올리기
+            </button>
+            <button
+              type="button"
+              onClick={onOpenPortfolioUpload}
+              className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-800 shadow-[0_14px_24px_-10px_rgba(27,31,77,0.12)] transition hover:border-[#1B1F4D]/30 active:scale-[0.98]"
+            >
+              포트폴리오 올리기
+            </button>
+          </div>
         </div>
 
         <div className="relative mb-6">
@@ -85,9 +94,7 @@ function HomeSection({ quests, freelancers, applications, onCreateQuest, onSelec
           />
         </div>
 
-        {spotlightFreelancers.length > 0 && (
-          <TrendingFreelancers freelancers={spotlightFreelancers} onSelectFreelancer={onSelectFreelancer} />
-        )}
+        <TrendingFreelancers freelancers={spotlightFreelancers} onSelectFreelancer={onSelectFreelancer} />
 
         <div className="mt-12 flex items-center justify-between">
           <div className="glass-pill inline-flex w-fit rounded-2xl p-1.5">
@@ -130,6 +137,17 @@ function TrendingFreelancers({ freelancers, onSelectFreelancer }) {
         </button>
       </div>
       <div className="flex gap-5 overflow-x-auto pb-2">
+        {cards.length === 0 && (
+          <div className="flex h-36 min-w-[300px] flex-col justify-between rounded-3xl border border-dashed border-slate-200 bg-white/70 p-5 text-left shadow-[0_20px_45px_-34px_rgba(15,23,42,0.35)] sm:min-w-[420px]">
+            <div>
+              <p className="text-lg font-black text-slate-950">아직 공개된 프리랜서가 없습니다</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+                프로필에서 Freelancer 공개를 켠 실제 사용자만 여기에 표시됩니다.
+              </p>
+            </div>
+            <p className="text-xs font-bold text-slate-400">No sample profiles</p>
+          </div>
+        )}
         {cards.map((person, index) => (
           <button
             key={person.id}
@@ -232,9 +250,14 @@ function PeoplePreview({ freelancers, onSelectFreelancer }) {
           >
             <div className="flex items-center gap-3">
               <Avatar avatarUrl={person.avatar_url} name={person.display_name} size={48} />
-              <div>
-                <p className="text-base font-black text-slate-950">{person.display_name}</p>
-                <p className="text-xs text-slate-500">{person.role}</p>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <p className="truncate text-base font-black text-slate-950">{person.display_name}</p>
+                {person.role && (
+                  <>
+                    <span className="text-slate-300">·</span>
+                    <p className="truncate text-sm font-semibold text-slate-500">{person.role}</p>
+                  </>
+                )}
               </div>
             </div>
             <p className="mt-4 line-clamp-2 text-sm leading-6 text-slate-600">{person.bio || "소개가 아직 없습니다."}</p>

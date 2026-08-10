@@ -15,6 +15,7 @@ import NotificationBell from "./components/NotificationBell";
 import RehireModal from "./components/RehireModal";
 import FreelancerSection from "./components/FreelancerSection";
 import FreelancerProfileModal from "./components/FreelancerProfileModal";
+import PortfolioUploadModal from "./components/PortfolioUploadModal";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
 const tabs = [
@@ -82,6 +83,7 @@ function App() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isHomePortfolioOpen, setIsHomePortfolioOpen] = useState(false);
   const [authMode, setAuthMode] = useState("sign-in");
   const [statusMessage, setStatusMessage] = useState("");
   const [questForm, setQuestForm] = useState(emptyQuestForm);
@@ -315,6 +317,23 @@ function App() {
     }
     await loadMyPortfolioItems(currentUser.id);
     await loadFreelancers();
+  };
+
+  const addPortfolioItemFromHome = async (item) => {
+    await addPortfolioItem(item);
+
+    if (!profile?.is_freelancer) {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_freelancer: true })
+        .eq("id", currentUser.id);
+
+      if (!error) {
+        await loadProfile(currentUser.id);
+        await loadFreelancers();
+        setStatusMessage("작업물이 등록됐어요. Freelancer 탭에서 내 프로필도 공개됐어요.");
+      }
+    }
   };
 
   const requireAuth = (nextTab) => {
@@ -921,6 +940,14 @@ function App() {
             onCreateQuest={() => requireAuth("create-quest")}
             onSelectQuest={openDetail}
             onSelectFreelancer={(freelancer) => setFreelancerTarget(freelancer)}
+            onOpenPortfolioUpload={() => {
+              if (!currentUser) {
+                setAuthMode("sign-in");
+                setIsAuthOpen(true);
+                return;
+              }
+              setIsHomePortfolioOpen(true);
+            }}
           />
         );
       case "freelancer":
@@ -1188,6 +1215,14 @@ function App() {
           submitLabel="제안 보내기"
           onSubmit={proposeToFreelancer}
           onClose={() => setFreelancerTarget(null)}
+        />
+      )}
+
+      {isHomePortfolioOpen && currentUser && (
+        <PortfolioUploadModal
+          userId={currentUser.id}
+          onAdd={addPortfolioItemFromHome}
+          onClose={() => setIsHomePortfolioOpen(false)}
         />
       )}
 
