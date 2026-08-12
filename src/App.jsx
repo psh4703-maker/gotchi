@@ -262,10 +262,6 @@ function App() {
         display_name: fields.displayName,
         role: fields.role,
         avatar_url: fields.avatarUrl || "",
-        is_freelancer: fields.isFreelancer,
-        bio: fields.bio || "",
-        skills: fields.skills || [],
-        desired_terms: fields.desiredTerms || "",
       })
       .eq("id", currentUser.id);
 
@@ -277,7 +273,6 @@ function App() {
     setIsEditProfileOpen(false);
     setStatusMessage("프로필이 업데이트됐어요.");
     await loadProfile(currentUser.id);
-    await loadFreelancers();
   };
 
   const loadMyPortfolioItems = async (userId) => {
@@ -319,21 +314,34 @@ function App() {
     await loadFreelancers();
   };
 
-  const addPortfolioItemFromHome = async (item) => {
-    await addPortfolioItem(item);
+  // 홈 화면 "포트폴리오 올리기" 버튼에서 진입하는 단일 플로우:
+  // 소개/역량/희망조건을 저장하면서 동시에 Freelancer 탭 공개를 켜고,
+  // 입력된 작업물이 있으면 그것도 같이 등록한다.
+  const saveFreelancerProfile = async ({ bio, skills, desiredTerms, item }) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        is_freelancer: true,
+        bio: bio || "",
+        skills: skills || [],
+        desired_terms: desiredTerms || "",
+      })
+      .eq("id", currentUser.id);
 
-    if (!profile?.is_freelancer) {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_freelancer: true })
-        .eq("id", currentUser.id);
-
-      if (!error) {
-        await loadProfile(currentUser.id);
-        await loadFreelancers();
-        setStatusMessage("작업물이 등록됐어요. Freelancer 탭에서 내 프로필도 공개됐어요.");
-      }
+    if (error) {
+      setStatusMessage(friendlyError(error.message));
+      return;
     }
+
+    if (item && (item.title?.trim() || item.link?.trim() || item.imageUrl)) {
+      await addPortfolioItem(item);
+    }
+
+    setIsHomePortfolioOpen(false);
+    setStatusMessage("포트폴리오가 등록됐어요. Freelancer 탭에서 확인할 수 있어요.");
+    await loadProfile(currentUser.id);
+    await loadMyPortfolioItems(currentUser.id);
+    await loadFreelancers();
   };
 
   const requireAuth = (nextTab) => {
@@ -1221,7 +1229,10 @@ function App() {
       {isHomePortfolioOpen && currentUser && (
         <PortfolioUploadModal
           userId={currentUser.id}
-          onAdd={addPortfolioItemFromHome}
+          profile={profile}
+          portfolioItems={myPortfolioItems}
+          onSave={saveFreelancerProfile}
+          onDeleteItem={deletePortfolioItem}
           onClose={() => setIsHomePortfolioOpen(false)}
         />
       )}
@@ -1237,12 +1248,9 @@ function App() {
         <EditProfileModal
           user={currentUser}
           profile={profile}
-          portfolioItems={myPortfolioItems}
           onSubmit={updateProfile}
           onClose={() => setIsEditProfileOpen(false)}
           onDeleteAccount={deleteAccount}
-          onAddPortfolioItem={addPortfolioItem}
-          onDeletePortfolioItem={deletePortfolioItem}
         />
       )}
 
