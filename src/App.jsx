@@ -15,6 +15,7 @@ import NotificationBell from "./components/NotificationBell";
 import RehireModal from "./components/RehireModal";
 import FreelancerSection from "./components/FreelancerSection";
 import FreelancerProfileModal from "./components/FreelancerProfileModal";
+import ApplicantProfileModal from "./components/ApplicantProfileModal";
 import PortfolioUploadModal from "./components/PortfolioUploadModal";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient";
 
@@ -78,6 +79,7 @@ function App() {
   const [quests, setQuests] = useState([]);
   const [freelancers, setFreelancers] = useState([]);
   const [freelancerTarget, setFreelancerTarget] = useState(null);
+  const [viewProfileUserId, setViewProfileUserId] = useState(null);
   const [myPortfolioItems, setMyPortfolioItems] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -1200,6 +1202,7 @@ function App() {
             .map((app) => ({ ...app, title: titleForApplication(app) }))}
           counterpartStats={counterpartStats}
           onRehire={() => setRehireTarget(workspaceApp)}
+          onViewProfile={() => setViewProfileUserId(workspaceApp.applicant_id)}
         />
       )}
 
@@ -1224,6 +1227,10 @@ function App() {
           onSubmit={proposeToFreelancer}
           onClose={() => setFreelancerTarget(null)}
         />
+      )}
+
+      {viewProfileUserId && (
+        <ApplicantProfileModal userId={viewProfileUserId} onClose={() => setViewProfileUserId(null)} />
       )}
 
       {isHomePortfolioOpen && currentUser && (

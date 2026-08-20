@@ -36,6 +36,7 @@ function WorkspaceModal({
   pairHistory,
   counterpartStats,
   onRehire,
+  onViewProfile,
 }) {
   const [tab, setTab] = useState(
     ["accepted", "submitted", "disputed"].includes(application.status) ? "chat" : "brief",
@@ -118,6 +119,16 @@ function WorkspaceModal({
                     <p className="text-[10px] font-bold text-slate-400">받은 리뷰</p>
                   </div>
                 </div>
+              )}
+
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={onViewProfile}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:border-[#1B1F4D]/30 hover:text-[#1B1F4D]"
+                >
+                  지원자 포트폴리오·평가 전체보기
+                </button>
               )}
 
               {pairHistory?.length > 0 && (
